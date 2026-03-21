@@ -48,7 +48,7 @@ class ProcessControllerTest extends AbstractApiTest {
 
         instances.forEach(instance ->
                 givenWithAuth(adminToken)
-                        .post("/api/processes/" + instance.getId() + "/terminate")
+                        .post("/api/processes/" + instance.getProcessInstanceId() + "/terminate")
                         .then()
                         .statusCode(200)
         );
@@ -79,11 +79,11 @@ class ProcessControllerTest extends AbstractApiTest {
                 .post("/api/processes")
                 .then()
                 .statusCode(200)
-                .body("data.id", notNullValue())
+                .body("data.processInstanceId", notNullValue())
                 .extract()
                 .response();
 
-        return response.path("data.id");
+        return response.path("data.processInstanceId");
     }
 
     @Test
@@ -114,7 +114,7 @@ class ProcessControllerTest extends AbstractApiTest {
                 .statusCode(200)
                 .body("code", is("SUCCESS"))
                 .body("data.processDefinitionKey", is("simple-process"))
-                .body("data.id", notNullValue());
+                .body("data.processInstanceId", notNullValue());
     }
 
     @Test
@@ -142,7 +142,7 @@ class ProcessControllerTest extends AbstractApiTest {
                 .then()
                 .statusCode(200)
                 .body("code", is("SUCCESS"))
-                .body("data.id", is(instanceId))
+                .body("data.processInstanceId", is(instanceId))
                 .body("data.processDefinitionKey", is("simple-process"));
     }
 
@@ -192,7 +192,7 @@ class ProcessControllerTest extends AbstractApiTest {
                 .get("/api/processes/" + instanceId)
                 .then()
                 .statusCode(200)
-                .body("data.id", is(instanceId));
+                .body("data.processInstanceId", is(instanceId));
     }
 
     @Test
