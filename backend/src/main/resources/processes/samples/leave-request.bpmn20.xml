@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/2.0"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/2.0/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:flowable="http://flowable.org/bpmn"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://flowable.org/bpmn">
+
+  <process id="leaveRequest" name="Leave Request Process" isExecutable="true">
+    <documentation>A simple leave approval workflow where employees submit leave requests and managers approve them.</documentation>
+
+    <startEvent id="start" name="Start"/>
+    <sequenceFlow sourceRef="start" targetRef="submitLeave"/>
+
+    <userTask id="submitLeave" name="Submit Leave Request" flowable:assignee="${employeeName}">
+      <documentation>Employee submits their leave request with dates and reason</documentation>
+    </userTask>
+    <sequenceFlow sourceRef="submitLeave" targetRef="managerApproval"/>
+
+    <userTask id="managerApproval" name="Manager Approval" flowable:candidateGroups="${managerDepartment}">
+      <documentation>Manager reviews and approves the leave request</documentation>
+    </userTask>
+    <sequenceFlow sourceRef="managerApproval" targetRef="end"/>
+
+    <endEvent id="end" name="End"/>
+  </process>
+
+  <!-- BPMN Diagram -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_leaveRequest">
+    <bpmndi:BPMNPlane bpmnElement="leaveRequest" id="BPMNPlane_leaveRequest">
+      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_start">
+        <omgdc:Bounds height="30.0" width="30.0" x="100.0" y="163.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="submitLeave" id="BPMNShape_submitLeave">
+        <omgdc:Bounds height="80.0" width="100.0" x="180.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="managerApproval" id="BPMNShape_managerApproval">
+        <omgdc:Bounds height="80.0" width="100.0" x="330.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="end" id="BPMNShape_end">
+        <omgdc:Bounds height="28.0" width="28.0" x="480.0" y="164.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge bpmnElement="start_submitLeave" id="BPMNEdge_start_submitLeave">
+        <omgdi:waypoint x="129.94999999999993" y="178.0"/>
+        <omgdi:waypoint x="179.99999999999994" y="178.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="submitLeave_managerApproval" id="BPMNEdge_submitLeave_managerApproval">
+        <omgdi:waypoint x="279.94999999999993" y="178.0"/>
+        <omgdi:waypoint x="329.99999999999994" y="178.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="managerApproval_end" id="BPMNEdge_managerApproval_end">
+        <omgdi:waypoint x="429.94999999999993" y="178.0"/>
+        <omgdi:waypoint x="480.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20191111/MODEL"
+             xmlns:flowable="http://flowable.org/dmn"
+             targetNamespace="http://flowable.org/dmn">
+
+  <decision id="simpleDecision" name="Simple Decision">
+    <decisionTable id="decisionTable" hitPolicy="FIRST">
+      <input id="input1" label="Age">
+        <inputExpression typeRef="integer">
+          <text>age</text>
+        </inputExpression>
+      </input>
+      <input id="input2" label="Income">
+        <inputExpression typeRef="integer">
+          <text>income</text>
+        </inputExpression>
+      </input>
+      <output id="output1" label="Approval" typeRef="boolean"/>
+
+      <rule id="rule1">
+        <inputEntry id="rule1-input1">
+          <text>&gt;= 18</text>
+        </inputEntry>
+        <inputEntry id="rule1-input2">
+          <text>&gt;= 50000</text>
+        </inputEntry>
+        <outputEntry id="rule1-output1">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+
+      <rule id="rule2">
+        <inputEntry id="rule2-input1">
+          <text>&gt;= 18</text>
+        </inputEntry>
+        <inputEntry id="rule2-input2">
+          <text>&lt; 50000</text>
+        </inputEntry>
+        <outputEntry id="rule2-output1">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+
+</definitions>

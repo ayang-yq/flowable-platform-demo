@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/2.0"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/2.0/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:flowable="http://flowable.org/bpmn"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://flowable.org/bpmn">
+
+  <process id="expenseReport" name="Expense Report Process" isExecutable="true">
+    <documentation>Process for submitting and approving expense reports</documentation>
+
+    <startEvent id="start" name="Start"/>
+    <sequenceFlow sourceRef="start" targetRef="submitExpense"/>
+
+    <userTask id="submitExpense" name="Submit Expense Report" flowable:assignee="${employee}">
+      <documentation>Employee submits expense report with details and receipt</documentation>
+    </userTask>
+    <sequenceFlow sourceRef="submitExpense" targetRef="managerReview"/>
+
+    <userTask id="managerReview" name="Manager Review" flowable:candidateGroups="managers">
+      <documentation>Manager reviews the expense report</documentation>
+    </userTask>
+    <sequenceFlow sourceRef="managerReview" targetRef="gateway1"/>
+
+    <exclusiveGateway id="gateway1" name="Approval Decision"/>
+    <sequenceFlow sourceRef="gateway1" targetRef="financeApproval" name="Approved">
+      <conditionExpression xsi:type="tFormalExpression">${approved == true}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow sourceRef="gateway1" targetRef="rejectEnd" name="Rejected">
+      <conditionExpression xsi:type="tFormalExpression">${approved == false}</conditionExpression>
+    </sequenceFlow>
+
+    <userTask id="financeApproval" name="Finance Approval" flowable:candidateGroups="finance">
+      <documentation>Finance team processes the approved expense</documentation>
+    </userTask>
+    <sequenceFlow sourceRef="financeApproval" targetRef="end"/>
+
+    <endEvent id="end" name="Approved"/>
+    <endEvent id="rejectEnd" name="Rejected"/>
+  </process>
+
+</definitions>

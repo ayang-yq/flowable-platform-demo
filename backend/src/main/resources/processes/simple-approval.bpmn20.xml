@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/2.0"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/2.0/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://flowable.org/bpmn">
+
+  <process id="simpleApproval" name="Simple Approval Process" isExecutable="true">
+    <startEvent id="start" name="Start"/>
+    <sequenceFlow sourceRef="start" targetRef="submitTask"/>
+
+    <userTask id="submitTask" name="Submit Request" flowable:assignee="${employeeName}"/>
+    <sequenceFlow sourceRef="submitTask" targetRef="approvalTask"/>
+
+    <userTask id="approvalTask" name="Manager Approval">
+      <documentation>Manager reviews and approves the request</documentation>
+    </userTask>
+    <sequenceFlow sourceRef="approvalTask" targetRef="end"/>
+
+    <endEvent id="end" name="End"/>
+  </process>
+
+</definitions>

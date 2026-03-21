@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/2.0"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/2.0/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:flowable="http://flowable.org/bpmn"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://flowable.org/bpmn">
+
+  <process id="purchaseOrder" name="Purchase Order Process" isExecutable="true">
+    <documentation>Multi-step purchase order approval workflow</documentation>
+
+    <startEvent id="start" name="Start"/>
+    <sequenceFlow sourceRef="start" targetId="createPO"/>
+
+    <userTask id="createPO" name="Create Purchase Order" flowable:assignee="${requester}">
+      <documentation>Employee creates purchase order request</documentation>
+    </userTask>
+    <sequenceFlow sourceRef="createPO" targetId="deptApproval"/>
+
+    <userTask id="deptApproval" name="Department Approval" flowable:candidateGroups="${dept}"/>
+    <sequenceFlow sourceRef="deptApproval" targetId="amountGateway"/>
+
+    <exclusiveGateway id="amountGateway" name="Check Amount"/>
+    <sequenceFlow sourceRef="amountGateway" targetId="managerApproval" name="High Amount">
+      <conditionExpression xsi:type="tFormalExpression">${amount &gt; 5000}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow sourceRef="amountGateway" targetId="autoApproval" name="Low Amount">
+      <conditionExpression xsi:type="tFormalExpression">${amount &lt;= 5000}</conditionExpression>
+    </sequenceFlow>
+
+    <userTask id="managerApproval" name="Manager Approval" flowable:candidateGroups="managers"/>
+    <sequenceFlow sourceRef="managerApproval" targetId="procurement"/>
+
+    <serviceTask id="autoApproval" name="Auto Approve" flowable:class="com.flowable.platform.service.AutoApproveTask"/>
+    <sequenceFlow sourceRef="autoApproval" targetId="procurement"/>
+
+    <userTask id="procurement" name="Procurement Processing" flowable:candidateGroups="procurement"/>
+    <sequenceFlow sourceRef="procurement" targetId="end"/>
+
+    <endEvent id="end" name="Completed"/>
+  </process>
+
+</definitions>

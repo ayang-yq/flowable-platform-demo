@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/CMMN/20151109/DMN"
+             xmlns:cmmn="http://www.omg.org/spec/CMMN/20151109/MODEL"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://flowable.org/cmmn">
+
+  <case id="adHocCase" name="Ad-Hoc Case">
+    <casePlanModel id="casePlanModel" name="Case Plan Model">
+      <planItem id="planItemHumanTask" name="Initial Task" definitionRef="humanTask"/>
+      <humanTask id="humanTask" name="Initial Task" isBlocking="true"/>
+
+      <!-- Ad-hoc tasks can be created dynamically during case execution -->
+      <planItem id="adHocTask" name="Ad-hoc Task" definitionRef="adHocHumanTask"/>
+      <humanTask id="adHocHumanTask" name="Ad-hoc Task" isBlocking="true"/>
+    </casePlanModel>
+  </case>
+
+</definitions>
