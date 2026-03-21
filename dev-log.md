@@ -6,7 +6,55 @@
 
 ---
 
-## 2026-03-21 - Git Commit: Unstaged Changes
+## 2026-03-21 - Architecture Update: Docker Deployment
+
+**Timestamp**: 2026-03-21 15:50:00 UTC
+**User Request**:
+> 更新architecture.md 添加使用Docker 启动应用，支持使用docker-compose 一键启动前端，后端和数据库。
+
+**Actions Performed**:
+- 🔄 Logging request to dev-log.md (MANDATORY FIRST STEP)
+- ⏳ Pending: Read current architecture.md file
+- ⏳ Pending: Add Docker deployment section
+- ⏳ Pending: Add docker-compose configuration details
+- ⏳ Pending: Include container orchestration instructions
+- ⏳ Pending: Save updated architecture.md
+- ⏳ Pending: Execute auto-commit following Git Automation Rules
+
+**Context**: Enhancing architecture documentation with Docker containerization and docker-compose for streamlined development/production deployment
+
+**Actions Performed**:
+- ✅ Logged request to dev-log.md (MANDATORY FIRST STEP)
+- ✅ Read current architecture.md file (84 lines)
+- ✅ Added comprehensive "三、部署架构" section with:
+  - Docker 容器化部署 (4 subsections: 容器化优势, 镜像组织, 后端Dockerfile, 前端Dockerfile, 数据库容器)
+  - Docker Compose 一键编排 (4 subsections: 完整配置, 服务依赖关系, 环境变量管理)
+  - 快速启动指南 (4 subsections: 前置要求, 一键启动命令, 服务管理命令, 生产环境优化)
+  - Docker Compose 扩展配置 (2 subsections: 开发环境覆盖, 监控服务扩展)
+  - 部署验证清单 (6 个验证检查点)
+  - 故障排查 (3 subsections: 常见问题, 调试技巧)
+  - 生产环境部署建议 (3 subsections: 安全加固, 高可用部署, 备份策略)
+  - 性能优化建议 (5 个优化方向)
+- ✅ Total content added: ~800 lines of comprehensive Docker deployment documentation
+- ✅ Saved updated architecture.md
+- ⏳ Pending: Execute auto-commit following Git Automation Rules
+
+**Key Additions**:
+- **完整的Dockerfile示例**: 后端（多阶段构建，Spring Boot）+ 前端（Next.js + Nginx）
+- **docker-compose.yml完整配置**: 包含PostgreSQL、backend、frontend三个服务，健康检查、依赖关系、网络配置
+- **一键启动指南**: `docker-compose up -d` 完整启动所有服务
+- **服务管理命令**: 启动、停止、重启、日志查看、容器调试等完整命令集
+- **部署验证清单**: 6个关键验证点确保部署成功
+- **故障排查**: 常见问题（启动失败、数据库连接、API调用）和调试技巧
+- **生产环境建议**: 安全加固、高可用（Kubernetes）、备份策略
+- **性能优化**: 镜像优化、启动优化、网络优化、资源配置等
+
+**Outcome**: Successfully added comprehensive Docker deployment documentation to architecture.md, enabling one-command startup of frontend, backend, and database using docker-compose.
+
+**Files Modified**:
+- `architecture.md` (+800 lines, 完整的Docker部署章节)
+
+**Status**: COMPLETE - Ready for auto-commit per Git Automation Rules
 
 **Timestamp**: 2026-03-21 15:45:00 UTC
 **User Request**:
