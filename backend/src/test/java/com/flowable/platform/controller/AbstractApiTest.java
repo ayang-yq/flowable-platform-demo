@@ -1,7 +1,6 @@
 package com.flowable.platform.controller;
 
 import com.flowable.platform.dto.LoginRequest;
-import com.flowable.platform.dto.LoginResponse;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -67,8 +66,7 @@ public abstract class AbstractApiTest {
                 .extract()
                 .response();
 
-        LoginResponse adminData = adminResponse.path("data");
-        adminToken = adminData.getToken();
+        adminToken = adminResponse.path("data.token");
 
         // Login as regular user
         LoginRequest userLogin = new LoginRequest();
@@ -87,8 +85,7 @@ public abstract class AbstractApiTest {
                 .extract()
                 .response();
 
-        LoginResponse userData = userResponse.path("data");
-        userToken = userData.getToken();
+        userToken = userResponse.path("data.token");
     }
 
     protected RequestSpecification givenWithAuth(String token) {
