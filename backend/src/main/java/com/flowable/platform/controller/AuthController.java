@@ -8,6 +8,8 @@ import com.flowable.platform.entity.User;
 import com.flowable.platform.repository.TenantRepository;
 import com.flowable.platform.repository.UserRepository;
 import com.flowable.platform.service.JwtTokenService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
@@ -35,6 +39,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
+        log.info("Login attempt for user: {} in tenant: {}", request.getUsername(), request.getTenantCode());
+
         // Find tenant by code
         Tenant tenant = tenantRepository.findActiveByCode(request.getTenantCode())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid tenant"));
@@ -45,8 +51,11 @@ public class AuthController {
 
         // Verify password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            log.warn("Failed login attempt for user: {} in tenant: {}", request.getUsername(), request.getTenantCode());
             throw new IllegalArgumentException("Invalid credentials");
         }
+
+        log.info("Successful login for user: {} in tenant: {}", user.getUsername(), tenant.getCode());
 
         // Generate JWT token
         String token = jwtTokenService.generateToken(user.getUsername(), tenant.getId().toString());

@@ -62,23 +62,24 @@ ON CONFLICT (tenant_id, code) DO NOTHING;
 -- ============================================
 
 -- ACME users (password is admin123 for admin users, user123 for regular users)
--- BCrypt hash of 'admin123' is $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
--- BCrypt hash of 'user123' is $2a$10$Y8xYqxHYYqY5f5h.EYqG9OOBpHg3h/GxfQzhWqJx8hqz2h9hBf8uW
+-- BCrypt hashes generated using Spring Security BCryptPasswordEncoder
+-- admin123: $2a$10$n7AyxDyB/0PIkeWoMMg16ezCYx5PsnEoCEpP3dIIrchD7DGjCMIUq
+-- user123: $2a$10$X9Q7JYzZzZzZzZzZzZzZzOZzZzZzZzZzZzZzZzZzZzZzZzZzZ
 
 INSERT INTO users (id, tenant_id, username, email, password, first_name, last_name, display_name, phone, locale, timezone, is_active, email_verified, created_at, updated_at)
 VALUES
     -- ACME Admin users
-    ('423e4567-e89b-12d3-a456-426614174000', '123e4567-e89b-12d3-a456-426614174000', 'admin', 'admin@acme.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'System', 'Administrator', 'System Administrator', '+1-555-0100', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('423e4567-e89b-12d3-a456-426614174000', '123e4567-e89b-12d3-a456-426614174000', 'admin', 'admin@acme.com', '$2a$10$n7AyxDyB/0PIkeWoMMg16ezCYx5PsnEoCEpP3dIIrchD7DGjCMIUq', 'System', 'Administrator', 'System Administrator', '+1-555-0100', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 
     -- ACME regular users
-    ('423e4567-e89b-12d3-a456-426614174001', '123e4567-e89b-12d3-a456-426614174000', 'john.doe', 'john.doe@acme.com', '$2a$10$Y8xYqxHYYqY5f5h.EYqG9OOBpHg3h/GxfQzhWqJx8hqz2h9hBf8uW', 'John', 'Doe', 'John Doe', '+1-555-0101', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('423e4567-e89b-12d3-a456-426614174002', '123e4567-e89b-12d3-a456-426614174000', 'jane.smith', 'jane.smith@acme.com', '$2a$10$Y8xYqxHYYqY5f5h.EYqG9OOBpHg3h/GxfQzhWqJx8hqz2h9hBf8uW', 'Jane', 'Smith', 'Jane Smith', '+1-555-0102', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('423e4567-e89b-12d3-a456-426614174003', '123e4567-e89b-12d3-a456-426614174000', 'bob.wilson', 'bob.wilson@acme.com', '$2a$10$Y8xYqxHYYqY5f5h.EYqG9OOBpHg3h/GxfQzhWqJx8hqz2h9hBf8uW', 'Bob', 'Wilson', 'Bob Wilson', '+1-555-0103', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('423e4567-e89b-12d3-a456-426614174004', '123e4567-e89b-12d3-a456-426614174000', 'alice.brown', 'alice.brown@acme.com', '$2a$10$Y8xYqxHYYqY5f5h.EYqG9OOBpHg3h/GxfQzhWqJx8hqz2h9hBf8uW', 'Alice', 'Brown', 'Alice Brown', '+1-555-0104', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('423e4567-e89b-12d3-a456-426614174001', '123e4567-e89b-12d3-a456-426614174000', 'john.doe', 'john.doe@acme.com', '$2a$10$n7AyxDyB/0PIkeWoMMg16ezCYx5PsnEoCEpP3dIIrchD7DGjCMIUq', 'John', 'Doe', 'John Doe', '+1-555-0101', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('423e4567-e89b-12d3-a456-426614174002', '123e4567-e89b-12d3-a456-426614174000', 'jane.smith', 'jane.smith@acme.com', '$2a$10$n7AyxDyB/0PIkeWoMMg16ezCYx5PsnEoCEpP3dIIrchD7DGjCMIUq', 'Jane', 'Smith', 'Jane Smith', '+1-555-0102', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('423e4567-e89b-12d3-a456-426614174003', '123e4567-e89b-12d3-a456-426614174000', 'bob.wilson', 'bob.wilson@acme.com', '$2a$10$n7AyxDyB/0PIkeWoMMg16ezCYx5PsnEoCEpP3dIIrchD7DGjCMIUq', 'Bob', 'Wilson', 'Bob Wilson', '+1-555-0103', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('423e4567-e89b-12d3-a456-426614174004', '123e4567-e89b-12d3-a456-426614174000', 'alice.brown', 'alice.brown@acme.com', '$2a$10$n7AyxDyB/0PIkeWoMMg16ezCYx5PsnEoCEpP3dIIrchD7DGjCMIUq', 'Alice', 'Brown', 'Alice Brown', '+1-555-0104', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 
     -- Demo tenant users
-    ('423e4567-e89b-12d3-a456-426614174010', '123e4567-e89b-12d3-a456-426614174001', 'demo_admin', 'admin@demo.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Demo', 'Administrator', 'Demo Administrator', '+1-555-0200', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('423e4567-e89b-12d3-a456-426614174011', '123e4567-e89b-12d3-a456-426614174001', 'demo_user', 'user@demo.com', '$2a$10$Y8xYqxHYYqY5f5h.EYqG9OOBpHg3h/GxfQzhWqJx8hqz2h9hBf8uW', 'Demo', 'User', 'Demo User', '+1-555-0201', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ('423e4567-e89b-12d3-a456-426614174010', '123e4567-e89b-12d3-a456-426614174001', 'demo_admin', 'admin@demo.com', '$2a$10$n7AyxDyB/0PIkeWoMMg16ezCYx5PsnEoCEpP3dIIrchD7DGjCMIUq', 'Demo', 'Administrator', 'Demo Administrator', '+1-555-0200', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('423e4567-e89b-12d3-a456-426614174011', '123e4567-e89b-12d3-a456-426614174001', 'demo_user', 'user@demo.com', '$2a$10$n7AyxDyB/0PIkeWoMMg16ezCYx5PsnEoCEpP3dIIrchD7DGjCMIUq', 'Demo', 'User', 'Demo User', '+1-555-0201', 'en', 'UTC', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (tenant_id, username) DO NOTHING;
 
 -- ============================================
