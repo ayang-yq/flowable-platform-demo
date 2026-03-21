@@ -2,6 +2,8 @@ package com.flowable.platform.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -40,7 +42,8 @@ public class AuditLog {
     @Column(name = "entity_id")
     private String entityId;
 
-    @Column(name = "details", columnDefinition = "JSONB")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "details")
     private String details;
 
     @Column(name = "session_id")

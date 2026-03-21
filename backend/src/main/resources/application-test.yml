@@ -12,6 +12,10 @@ spring:
   flyway:
     enabled: false
 
+  autoconfigure:
+    exclude:
+      - org.springdoc.springdoc-openapi-starter-webmvc-autoconfiguration
+
 flowable:
   database-schema-update: true
 

@@ -2,6 +2,10 @@ spring:
   application:
     name: flowable-platform-demo
 
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
@@ -114,12 +118,12 @@ management:
   endpoint:
     health:
       show-details: when-authorized
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
-
-# JWT configuration
+        
+        # JWT configuration
 jwt:
   secret: ${JWT_SECRET:your-super-secret-jwt-key-change-this-in-production-min-256-bits}
   expiration: 86400000 # 24 hours
