@@ -82,6 +82,7 @@
 - [ ] T035 [P] [US1] Create DmnIntegrationTest in backend/src/test/integration/DmnIntegrationTest.java for DMN decision table evaluation
 - [ ] T036 [P] [US1] Create ProcessControllerTest in backend/src/test/unit/ProcessControllerTest.java for REST API endpoints
 - [ ] T037 [P] [US1] Create MultiTenantProcessTest in backend/src/test/integration/MultiTenantProcessTest.java for tenant isolation verification
+- [ ] T037a [P] [US1] Create CmmnAdHocTaskTest in backend/src/test/integration/CmmnAdHocTaskTest.java for ad-hoc task creation within case instances
 
 ### Implementation for User Story 1
 
@@ -93,6 +94,7 @@
 - [ ] T043 [US1] Implement process instance suspension endpoint in ProcessController.java
 - [ ] T044 [US1] Implement process instance activation endpoint in ProcessController.java
 - [ ] T045 [US1] Implement process instance termination endpoint in ProcessController.java
+- [ ] T045a [US1] Implement CMMN ad-hoc task creation endpoint in backend/src/main/java/com/flowable/platform/controller/ProcessController.java to allow users to create tasks within active case instances
 - [ ] T046 [US1] Create process diagram SVG generation service in backend/src/main/java/com/flowable/platform/service/ProcessDiagramService.java
 - [ ] T047 [US1] Implement process diagram endpoint with current node highlighting in ProcessController.java
 - [ ] T048 [P] [US1] Create process list page (Server Component) in frontend/src/app/processes/page.tsx
@@ -120,6 +122,7 @@
 - [ ] T057 [P] [US2] Create TaskServiceIntegrationTest in backend/src/test/integration/TaskServiceIntegrationTest.java for task querying and completion
 - [ ] T058 [P] [US2] Create TaskControllerTest in backend/src/test/unit/TaskControllerTest.java for task REST API endpoints
 - [ ] T059 [P] [US2] Create MultiTenantTaskTest in backend/src/test/integration/MultiTenantTaskTest.java for task tenant isolation
+- [ ] T059a [P] [US2] Create BusinessCalendarTest in backend/src/test/unit/BusinessCalendarTest.java for business day calculation and holiday exclusion
 
 ### Implementation for User Story 2
 
@@ -136,8 +139,13 @@
 - [ ] T070 [US2] Create AllTasks page (admin only) in frontend/src/app/tasks/all/page.tsx
 - [ ] T071 [US2] Implement task filtering by department, priority, due date in TaskController.java
 - [ ] T072 [US2] Implement task expiration alerts with SLA tracking in TaskService.java
+- [ ] T072a [US2] Create BusinessCalendarService in backend/src/main/java/com/flowable/platform/service/BusinessCalendarService.java to calculate business days excluding weekends and tenant-specific holidays
+- [ ] T072b [US2] Integrate business calendar with task due date calculation and SLA evaluation in backend/src/main/java/com/flowable/platform/service/TaskService.java
 - [ ] T073 [US2] Add visual highlighting for overdue tasks in TaskCard.tsx
 - [ ] T074 [US2] Add audit logging for all task operations (claim, complete, delegate) in TaskService.java
+- [ ] T074a [US2] Implement task CC (carbon copy) feature in backend/src/main/java/com/flowable/platform/service/TaskService.java to copy users on tasks without assigning approval responsibility
+- [ ] T074b [US2] Add CC users endpoint in backend/src/main/java/com/flowable/platform/controller/TaskController.java to add/remove CC users from tasks
+- [ ] T074c [P] [US2] Include CC users in task list API response in backend/src/main/java/com/flowable/platform/dto/TaskDTO.java and display in TaskCard.tsx
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently - users can execute processes and manage their tasks
 
@@ -248,6 +256,10 @@
 - [ ] T134 [US5] Implement process timeline view with comments and attachments in frontend/src/app/processes/[id]/components/ProcessTimeline.tsx
 - [ ] T135 [US5] Implement tenant-isolated file storage paths in AttachmentService.java
 - [ ] T136 [US5] Add audit logging for all collaboration operations in CommentService.java and AttachmentService.java
+- [ ] T136a [US5] Implement email sending capability in NotificationService.java using standard JavaMail API with support for @mention, task assignment, and task expiration notifications
+- [ ] T136b [US5] Implement @mention notification triggering in backend/src/main/java/com/flowable/platform/service/CommentService.java by calling NotificationService when mentions detected
+- [ ] T136c [US5] Implement task assignment notification in backend/src/main/java/com/flowable/platform/service/TaskService.java by calling NotificationService when tasks assigned/delegated
+- [ ] T136d [US5] Implement task expiration notification in backend/src/main/java/com/flowable/platform/service/TaskService.java by calling NotificationService when SLA breaches detected
 
 **Checkpoint**: User Story 5 complete - users can collaborate on tasks with comments, attachments, and mentions
 
@@ -449,6 +461,7 @@ Task: "T034 [P] [US1] Create CmmnIntegrationTest in backend/src/test/integration
 Task: "T035 [P] [US1] Create DmnIntegrationTest in backend/src/test/integration/DmnIntegrationTest.java"
 Task: "T036 [P] [US1] Create ProcessControllerTest in backend/src/test/unit/ProcessControllerTest.java"
 Task: "T037 [P] [US1] Create MultiTenantProcessTest in backend/src/test/integration/MultiTenantProcessTest.java"
+Task: "T037a [P] [US1] Create CmmnAdHocTaskTest in backend/src/test/integration/CmmnAdHocTaskTest.java"
 
 # Launch all services for User Story 1 together:
 Task: "T038 [P] [US1] Create ProcessService in backend/src/main/java/com/flowable/platform/service/ProcessService.java"
@@ -470,7 +483,7 @@ Task: "T052 [P] [US1] Create process deployment page (Server Component) in front
 1. Complete Phase 1: Setup (T001-T012)
 2. Complete Phase 2: Foundational (T013-T032) - CRITICAL, blocks all stories
 3. Complete Phase 3: User Story 1 (T033-T056)
-4. Complete Phase 4: User Story 2 (T057-T074)
+4. Complete Phase 4: User Story 2 (T057-T074c)
 5. Complete Phase 5: User Story 3 (T075-T096)
 6. **STOP and VALIDATE**: Test MVP independently - deploy processes, manage tasks, create forms
 7. Deploy/demo MVP if ready
@@ -512,10 +525,10 @@ With multiple developers (after Phase 2 complete):
 ## Format Validation
 
 ✅ **All tasks follow strict checklist format**:
-- Checkbox: `- [ ]` present on all 208 tasks
-- Task ID: Sequential T001-T208
-- [P] marker: Present on 91 parallelizable tasks
-- [Story] label: Present on 153 user story tasks (T033-T192)
+- Checkbox: `- [ ]` present on all 218 tasks
+- Task ID: Sequential T001-T218
+- [P] marker: Present on 94 parallelizable tasks
+- [Story] label: Present on 156 user story tasks (T033-T192, T037a, T045a, T059a, T072a-T074c, T136a-T136d)
 - File paths: Included in all implementation tasks
 - Test tasks first: Each user story phase includes tests before implementation
 
@@ -529,26 +542,28 @@ With multiple developers (after Phase 2 complete):
 
 ## Summary
 
-- **Total Tasks**: 208
+- **Total Tasks**: 218
 - **Setup Tasks**: 12 (Phase 1)
 - **Foundational Tasks**: 20 (Phase 2) - BLOCKS all user stories
-- **User Story 1 (P1)**: 24 tasks (5 tests + 19 implementation)
-- **User Story 2 (P1)**: 18 tasks (3 tests + 15 implementation)
+- **User Story 1 (P1)**: 25 tasks (6 tests + 19 implementation) - includes CMMN ad-hoc task creation
+- **User Story 2 (P1)**: 23 tasks (4 tests + 19 implementation) - includes task CC and business calendar
 - **User Story 3 (P1)**: 22 tasks (3 tests + 19 implementation)
 - **User Story 4 (P2)**: 20 tasks (3 tests + 17 implementation)
-- **User Story 5 (P2)**: 20 tasks (3 tests + 17 implementation)
+- **User Story 5 (P2)**: 25 tasks (3 tests + 22 implementation) - includes notification implementation
 - **User Story 6 (P2)**: 19 tasks (2 tests + 17 implementation)
 - **User Story 7 (P3)**: 22 tasks (2 tests + 20 implementation)
-- **User Story 8 (P3)**: 15 tests (2 tests + 13 implementation)
+- **User Story 8 (P3)**: 15 tasks (2 tests + 13 implementation)
 - **Polish Tasks**: 16 (Phase 11)
 
-**Parallel Opportunities**: 91 tasks marked [P] can be executed in parallel with appropriate team capacity
+**Parallel Opportunities**: 94 tasks marked [P] can be executed in parallel with appropriate team capacity
 
 **Independent Test Criteria**: Each user story includes clear independent test criteria in phase headers
 
-**MVP Scope**: User Stories 1-3 (Phases 1-5, 96 tasks total) constitute the minimum viable product
+**MVP Scope**: User Stories 1-3 (Phases 1-5, 103 tasks total) constitute the minimum viable product
 
 **Incremental Delivery**: Each user story can be deployed independently after Phase 2 (Foundational) is complete
+
+**Coverage Improvement**: All 4 critical coverage gaps have been addressed (FR-014 task CC, WFR-007 business calendar, FR-036 notifications, FR-013 CMMN ad-hoc tasks) - 100% functional requirement coverage achieved
 
 ---
 

@@ -6,6 +6,69 @@
 
 ---
 
+## 2026-03-21 - Specification Analysis & Remediation
+
+**Timestamp**: 2026-03-21 19:00:00 UTC
+**User Request**:
+> yes, please suggest the concrete remediation edits for the 4 critical issues
+
+**Actions Performed**:
+- ✅ Logged request to dev-log.md (MANDATORY FIRST STEP)
+- ✅ Ran comprehensive cross-artifact analysis (spec.md, plan.md, tasks.md, constitution.md)
+- ✅ Detected 12 issues: 4 CRITICAL, 3 HIGH, 4 MEDIUM, 1 LOW
+- ✅ Identified 4 critical coverage gaps:
+  - C1: FR-014 (task CC) - zero task coverage
+  - C2: WFR-007 (business calendar) - zero task coverage
+  - C3: FR-036 (notifications) - zero task coverage (service created but not implemented)
+  - C4: FR-013 (CMMN ad-hoc tasks) - test exists but no implementation task
+- ✅ Generated 10 concrete remediation tasks with strict checklist format
+- ✅ Added 2 recommended test tasks (T037a, T059a) to maintain TDD principles
+- ✅ Inserted all tasks at correct locations in tasks.md with proper sequencing
+- ✅ Updated task counts: 208 → 218 tasks (93 parallelizable tasks → 94)
+- ✅ Updated user story task counts:
+  - US1: 24 → 25 tasks (+1 CMMN ad-hoc)
+  - US2: 18 → 23 tasks (+3 CC +2 business calendar)
+  - US5: 20 → 25 tasks (+4 notification implementation +1 updated)
+- ✅ Updated MVP scope: 96 → 103 tasks
+- ✅ Updated Format Validation section with new counts
+- ✅ Updated Summary section with coverage improvement note
+- ✅ Updated Parallel Example to include new test tasks
+- ✅ Verified constitution compliance for all new tasks
+- ⏳ Pending: Execute auto-commit following Git Automation Rules
+
+**Analysis Results**:
+- **Before**: 94.6% functional requirement coverage (53/56 requirements had tasks)
+- **After**: 100% functional requirement coverage (all 56 requirements have tasks)
+- **Constitution Compliance**: ✅ EXCELLENT - all 6 principles addressed, no violations
+- **Critical Gaps Resolved**: 4/4 (100%)
+
+**Remediation Tasks Added**:
+1. **T045a [US1]**: CMMN ad-hoc task creation endpoint (FR-013)
+2. **T037a [P] [US1]**: CMMN ad-hoc task test (recommended)
+3. **T072a [US2]**: BusinessCalendarService creation (WFR-007)
+4. **T072b [US2]**: Business calendar integration with SLA (WFR-007)
+5. **T059a [P] [US2]**: Business calendar test (recommended)
+6. **T074a [US2]**: Task CC feature implementation (FR-014)
+7. **T074b [US2]**: CC users REST API endpoint (FR-014)
+8. **T074c [P] [US2]**: CC users in task list and display (FR-014)
+9. **T136a [US5]**: Email sending capability in NotificationService (FR-036)
+10. **T136b [US5]**: @mention notification triggering (FR-036)
+11. **T136c [US5]**: Task assignment notification (FR-036)
+12. **T136d [US5]**: Task expiration notification (FR-036)
+
+**Context**: User approved concrete remediation edits for 4 critical coverage gaps identified in specification analysis. All remediation tasks follow strict checklist format and constitution principles.
+
+**Artifacts Modified**:
+- `specs/001-flowable-platform-core/tasks.md` (added 12 tasks, updated counts)
+
+**Next Steps**: Execute `/speckit.implement` to begin task execution, or continue with manual implementation
+
+**Git Commit**: Pending
+
+**Outcome**: ⏳ Pending commit
+
+---
+
 ## 2026-03-21 - Task Generation (Phase 2)
 
 **Timestamp**: 2026-03-21 18:00:00 UTC
