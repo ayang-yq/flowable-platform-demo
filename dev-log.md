@@ -6,7 +6,23 @@
 
 ---
 
-## 2026-03-21 - Instructions Update: Git Automation Rules
+## 2026-03-21 - Git Commit: Unstaged Changes
+
+**Timestamp**: 2026-03-21 15:45:00 UTC
+**User Request**:
+> commit unstaged changes
+
+**Actions Performed**:
+- 🔄 Logging request to dev-log.md (MANDATORY FIRST STEP)
+- ⏳ Pending: Check git status for unstaged changes
+- ⏳ Pending: Run pre-commit validation checks
+- ⏳ Pending: Stage relevant files
+- ⏳ Pending: Create commit with standardized message
+- ⏳ Pending: Update dev-log.md with commit reference
+
+**Context**: Committing all unstaged changes following new Git Automation Rules
+
+**Status**: IN PROGRESS - Audit logged, proceeding with git commit workflow
 
 **Timestamp**: 2026-03-21 15:30:00 UTC
 **User Request**:

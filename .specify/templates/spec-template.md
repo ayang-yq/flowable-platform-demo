@@ -85,10 +85,25 @@
 ### Functional Requirements
 
 - **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
+- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]
 - **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
+
+### Workflow Requirements *(if feature involves Flowable processes)*
+
+- **WFR-001**: Process definition MUST include [specific workflow capability]
+- **WFR-002**: Task assignments MUST respect [tenant/user/group/role] boundaries
+- **WFR-003**: Process variables MUST be [primitives or JSON-serializable, max 10KB]
+- **WFR-004**: Form schema MUST map to process variables with [specific naming convention]
+- **WFR-005**: Audit logging MUST capture [userId, tenantId, timestamp, IP, action]
+
+### Multi-Tenant Requirements *(if feature involves tenant data)*
+
+- **TFR-001**: All database queries MUST filter by tenant_id
+- **TFR-002**: Process instances MUST be isolated by tenant context
+- **TFR-003**: Cache keys MUST include tenant identifier
+- **TFR-004**: Cross-tenant data access MUST be prohibited
 
 *Example of marking unclear requirements:*
 

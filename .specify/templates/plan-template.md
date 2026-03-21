@@ -17,21 +17,28 @@
   the iteration process.
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: Java 21, TypeScript 5+
+**Primary Dependencies**: Spring Boot 3.5.x, Flowable 7.x, Next.js (App Router), React 18+
+**Storage**: PostgreSQL 15+ (multi-tenant schema strategy)
+**Testing**: JUnit 5, Testcontainers, Jest, React Testing Library
+**Target Platform**: Linux server (backend), Modern browsers (frontend)
+**Project Type**: Web service (multi-tenant workflow platform)
+**Performance Goals**: <500ms p95 response time, 1000+ concurrent users
+**Constraints**: Multi-tenant data isolation, Flowable-native services, Server/Client Component separation
+**Scale/Scope**: Multi-tenant SaaS, 10k+ users, 50+ process definitions
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] **Multi-Tenant Isolation**: Does design maintain absolute tenant data separation?
+- [ ] **Flowable-Native**: Are we using TaskService/RuntimeService/HistoryService directly (no abstractions)?
+- [ ] **Server/Client Boundaries**: Are all data fetching and Flowable calls in Server Components only?
+- [ ] **Form-Process Binding**: Do SurveyJS forms map correctly to Flowable process variables?
+- [ ] **Test Coverage**: Are there integration tests for all workflow gateways and decision points?
+- [ ] **Audit Trail**: Is every workflow action logged with userId, tenantId, timestamp, IP?
+- [ ] **Performance**: Do database queries include tenant_id filtering?
+- [ ] **Security**: Are process variables encrypted for sensitive data?
 
 ## Project Structure
 

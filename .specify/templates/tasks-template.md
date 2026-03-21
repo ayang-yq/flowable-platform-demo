@@ -49,8 +49,10 @@ description: "Task list template for feature implementation"
 **Purpose**: Project initialization and basic structure
 
 - [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize [language] project with [framework] dependencies
-- [ ] T003 [P] Configure linting and formatting tools
+- [ ] T002 Initialize backend (Spring Boot 3.5.x + Flowable 7.x) and frontend (Next.js) projects
+- [ ] T003 [P] Configure linting and formatting tools (SpotBugs, ESLint)
+- [ ] T004 [P] Setup PostgreSQL database with multi-tenant schema strategy
+- [ ] T005 [P] Configure Flyway/Liquibase for database migrations
 
 ---
 
@@ -62,12 +64,14 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T006 Setup multi-tenant database schema with tenant_id isolation
+- [ ] T007 [P] Implement Spring Security authentication/authorization framework
+- [ ] T008 [P] Setup Flowable engine configuration (multi-tenant, process history settings)
+- [ ] T009 [P] Create base services: TaskService, RuntimeService, HistoryService wrappers
+- [ ] T010 [P] Configure audit logging infrastructure (userId, tenantId, timestamp, IP tracking)
+- [ ] T011 [P] Setup API routing structure (Next.js App Router, Spring REST controllers)
+- [ ] T012 Configure error handling and structured logging
+- [ ] T013 Setup environment configuration management
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
