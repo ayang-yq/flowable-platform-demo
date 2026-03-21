@@ -2,8 +2,13 @@ spring:
   application:
     name: flowable-platform-demo
 
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.mail.MailHealthContributorAutoConfiguration
+
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/flowable_platform}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/flowable_platform}
     username: ${SPRING_DATASOURCE_USERNAME:flowable}
     password: ${SPRING_DATASOURCE_PASSWORD:flowable123}
     driver-class-name: org.postgresql.Driver
@@ -51,17 +56,18 @@ spring:
             user-info-uri: https://graph.microsoft.com/v1.0/me
             jwk-set-uri: https://login.microsoftonline.com/${AZURE_TENANT_ID}/discovery/v2.0/keys
 
-  mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+  # mail:
+  #   host: ${MAIL_HOST:smtp.gmail.com}
+  #   port: ${MAIL_PORT:587}
+  #   username: ${MAIL_USERNAME:}
+  #   password: ${MAIL_PASSWORD:}
+  #   test-connection: false
+  #   properties:
+  #     mail:
+  #       smtp:
+  #         auth: false
+  #         starttls:
+  #           enable: false
 
 # Flowable Configuration
 flowable:
@@ -69,7 +75,7 @@ flowable:
   tenant-id-column-tenant-value: true
 
   # Process engine configuration
-  database-schema-update: false
+  database-schema-update: true
   async-executor-activate: true
   async-history-enabled: true
 
@@ -139,3 +145,20 @@ server:
     threads:
       max: 200
       min-spare: 10
+
+# OpenAPI / Swagger configuration
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+  show-actuator: false
+  group-configs:
+    - group: 'platform'
+      paths-to-match: '/api/**'
+      packages-to-scan: com.flowable.platform
