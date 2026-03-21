@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="Examples">
+  <process id="simple-process" name="Simple Process" isExecutable="true">
+    <startEvent id="startEvent"/>
+    <sequenceFlow sourceRef="startEvent" targetRef="scriptTask"/>
+    <scriptTask id="scriptTask" scriptFormat="javascript" flowable:resultVariable="result">
+      <script>println("Simple process executed");</script>
+    </scriptTask>
+    <sequenceFlow sourceRef="scriptTask" targetRef="endEvent"/>
+    <endEvent id="endEvent"/>
+  </process>
+</definitions>
