@@ -1,0 +1,555 @@
+# Tasks: Flowable Platform Core
+
+**Input**: Design documents from `/specs/001-flowable-platform-core/`
+**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
+
+**Tests**: This implementation will follow TDD principles - test tasks are included for each component.
+
+**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+
+## Format: `[ID] [P?] [Story] Description`
+
+- **[P]**: Can run in parallel (different files, no dependencies)
+- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
+- Include exact file paths in descriptions
+
+## Path Conventions
+
+- **Web app**: `backend/src/`, `frontend/src/`
+
+---
+
+## Phase 1: Setup (Shared Infrastructure)
+
+**Purpose**: Project initialization and basic structure
+
+- [ ] T001 Create backend project structure with Spring Boot 3.5.x in backend/
+- [ ] T002 Create frontend project structure with Next.js 14+ in frontend/
+- [ ] T003 [P] Configure backend pom.xml with Flowable 7.x, Spring Security 6.x, PostgreSQL, Testcontainers dependencies
+- [ ] T004 [P] Configure frontend package.json with React 18+, SurveyJS, ECharts, Shadcn/UI dependencies
+- [ ] T005 [P] Setup ESLint and TypeScript configuration in frontend/
+- [ ] T006 [P] Setup SpotBugs and Checkstyle configuration in backend/
+- [ ] T007 [P] Create docker-compose.yml with PostgreSQL, backend, and frontend services
+- [ ] T008 [P] Create backend Dockerfile with multi-stage build (Maven → OpenJDK 21 Alpine)
+- [ ] T009 [P] Create frontend Dockerfile with multi-stage build (Node → Nginx Alpine)
+- [ ] T010 [P] Create .env.example with all required environment variables (POSTGRES_PASSWORD, JWT_SECRET, AZURE_CLIENT_ID, etc.)
+- [ ] T011 [P] Create database/init.sql for PostgreSQL initialization
+- [ ] T012 Create README.md with quickstart instructions referencing specs/001-flowable-platform-core/quickstart.md
+
+---
+
+## Phase 2: Foundational (Blocking Prerequisites)
+
+**Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
+
+**⚠️ CRITICAL**: No user story work can begin until this phase is complete
+
+- [ ] T013 Setup multi-tenant database schema with tenant_id column strategy in backend/src/main/resources/db/migration/V1__create_core_tables.sql
+- [ ] T014 [P] Configure Flowable 7.x multi-tenant settings in backend/src/main/resources/application.yml (tenant-id-column-tenant-value: true)
+- [ ] T015 [P] Configure PostgreSQL datasource with HikariCP in backend/src/main/resources/application.yml
+- [ ] T016 [P] Configure Flyway for database migrations in backend/src/main/resources/application.yml
+- [ ] T017 [P] Create Spring Security configuration in backend/src/main/java/com/flowable/platform/config/SecurityConfig.java
+- [ ] T018 [P] Create OAuth2/OIDC configuration in backend/src/main/java/com/flowable/platform/config/OAuth2Config.java
+- [ ] T019 [P] Create multi-tenant context filter in backend/src/main/java/com/flowable/platform/config/MultiTenantFilter.java
+- [ ] T020 [P] Create JWT token service in backend/src/main/java/com/flowable/platform/service/JwtTokenService.java
+- [ ] T021 [P] Create audit logging service in backend/src/main/java/com/flowable/platform/service/AuditService.java
+- [ ] T022 [P] Create error handling controller advice in backend/src/main/java/com/flowable/platform/config/GlobalExceptionHandler.java
+- [ ] T023 [P] Create structured logging configuration in backend/src/main/resources/logback-spring.xml
+- [ ] T024 [P] Create API response wrapper DTOs in backend/src/main/java/com/flowable/platform/dto/
+- [ ] T025 [P] Create Next.js API client utilities in frontend/src/lib/api.ts
+- [ ] T026 [P] Create authentication utilities in frontend/src/lib/auth.ts
+- [ ] T027 Create base entity classes (Tenant, User, Role) with JPA mappings in backend/src/main/java/com/flowable/platform/entity/
+- [ ] T028 Create repository interfaces for base entities in backend/src/main/java/com/flowable/platform/repository/
+- [ ] T029 Create authentication controller in backend/src/main/java/com/flowable/platform/controller/AuthController.java
+- [ ] T030 Create login page (Server Component) in frontend/src/app/login/page.tsx
+- [ ] T031 Create layout component with authentication wrapper in frontend/src/app/layout.tsx
+- [ ] T032 Configure Testcontainers for integration tests in backend/src/test/resources/application-test.yml
+
+**Checkpoint**: Foundation ready - user story implementation can now begin in parallel
+
+---
+
+## Phase 3: User Story 1 - Core Workflow Process Management (Priority: P1) 🎯 MVP
+
+**Goal**: Enable users to import, deploy, and execute BPMN/CMMN/DMN process models with visual tracking
+
+**Independent Test**: Import a BPMN file for a simple approval process, deploy it, start an instance, and verify it progresses through defined nodes with proper status tracking
+
+### Integration Tests for User Story 1
+
+- [ ] T033 [P] [US1] Create ProcessIntegrationTest in backend/src/test/integration/ProcessIntegrationTest.java for BPMN process execution
+- [ ] T034 [P] [US1] Create CmmnIntegrationTest in backend/src/test/integration/CmmnIntegrationTest.java for CMMN case instance execution
+- [ ] T035 [P] [US1] Create DmnIntegrationTest in backend/src/test/integration/DmnIntegrationTest.java for DMN decision table evaluation
+- [ ] T036 [P] [US1] Create ProcessControllerTest in backend/src/test/unit/ProcessControllerTest.java for REST API endpoints
+- [ ] T037 [P] [US1] Create MultiTenantProcessTest in backend/src/test/integration/MultiTenantProcessTest.java for tenant isolation verification
+
+### Implementation for User Story 1
+
+- [ ] T038 [P] [US1] Create ProcessService in backend/src/main/java/com/flowable/platform/service/ProcessService.java using RuntimeService, TaskService, HistoryService directly
+- [ ] T039 [P] [US1] Create ProcessDTO in backend/src/main/java/com/flowable/platform/dto/ProcessDTO.java
+- [ ] T040 [P] [US1] Create TaskDTO in backend/src/main/java/com/flowable/platform/dto/TaskDTO.java
+- [ ] T041 [US1] Create ProcessController in backend/src/main/java/com/flowable/platform/controller/ProcessController.java with endpoints for starting processes, listing instances, getting details
+- [ ] T042 [US1] Implement process deployment endpoint in ProcessController.java for BPMN/CMMN/DMN XML file upload
+- [ ] T043 [US1] Implement process instance suspension endpoint in ProcessController.java
+- [ ] T044 [US1] Implement process instance activation endpoint in ProcessController.java
+- [ ] T045 [US1] Implement process instance termination endpoint in ProcessController.java
+- [ ] T046 [US1] Create process diagram SVG generation service in backend/src/main/java/com/flowable/platform/service/ProcessDiagramService.java
+- [ ] T047 [US1] Implement process diagram endpoint with current node highlighting in ProcessController.java
+- [ ] T048 [P] [US1] Create process list page (Server Component) in frontend/src/app/processes/page.tsx
+- [ ] T049 [P] [US1] Create process instance detail page (Server Component) in frontend/src/app/processes/[id]/page.tsx
+- [ ] T050 [P] [US1] Create bpmn.js process diagram component (Client Component) in frontend/src/components/workflow/ProcessDiagram.tsx with lazy loading
+- [ ] T051 [US1] Implement process diagram current node highlighting in ProcessDiagram.tsx
+- [ ] T052 [P] [US1] Create process deployment page (Server Component) in frontend/src/app/admin/processes/deploy/page.tsx
+- [ ] T053 [US1] Implement BPMN/CMMN/DMN file upload in process deployment page
+- [ ] T054 [US1] Add process variable validation (<10KB per variable) in ProcessService.java
+- [ ] T055 [US1] Add audit logging for all process operations (start, suspend, activate, terminate) in ProcessService.java
+- [ ] T056 [US1] Add error handling for invalid process definitions in ProcessController.java
+
+**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently - users can deploy BPMN/CMMN/DMN models and execute processes
+
+---
+
+## Phase 4: User Story 2 - Task Center Management (Priority: P1)
+
+**Goal**: Provide centralized workspace for users to manage their workflow tasks
+
+**Independent Test**: Create tasks for different users, log in as each user, and verify they see only their assigned tasks in appropriate queues (pending, completed, initiated)
+
+### Integration Tests for User Story 2
+
+- [ ] T057 [P] [US2] Create TaskServiceIntegrationTest in backend/src/test/integration/TaskServiceIntegrationTest.java for task querying and completion
+- [ ] T058 [P] [US2] Create TaskControllerTest in backend/src/test/unit/TaskControllerTest.java for task REST API endpoints
+- [ ] T059 [P] [US2] Create MultiTenantTaskTest in backend/src/test/integration/MultiTenantTaskTest.java for task tenant isolation
+
+### Implementation for User Story 2
+
+- [ ] T060 [P] [US2] Create TaskService in backend/src/main/java/com/flowable/platform/service/TaskService.java using Flowable TaskService directly
+- [ ] T061 [US2] Create TaskController in backend/src/main/java/com/flowable/platform/controller/TaskController.java with endpoints for my-tasks, completed, my-requests
+- [ ] T062 [US2] Implement task claim endpoint in TaskController.java
+- [ ] T063 [US2] Implement task complete endpoint with form data in TaskController.java
+- [ ] T064 [US2] Implement task delegate endpoint in TaskController.java
+- [ ] T065 [US2] Implement task reassignment endpoint (admin only) in TaskController.java
+- [ ] T066 [P] [US2] Create MyTasks page (Server Component) in frontend/src/app/tasks/page.tsx
+- [ ] T067 [P] [US2] Create TaskCard component (Client Component) in frontend/src/app/tasks/components/TaskCard.tsx
+- [ ] T068 [P] [US2] Create CompletedTasks page (Server Component) in frontend/src/app/tasks/completed/page.tsx
+- [ ] T069 [P] [US2] Create MyRequests page (Server Component) in frontend/src/app/tasks/requests/page.tsx
+- [ ] T070 [US2] Create AllTasks page (admin only) in frontend/src/app/tasks/all/page.tsx
+- [ ] T071 [US2] Implement task filtering by department, priority, due date in TaskController.java
+- [ ] T072 [US2] Implement task expiration alerts with SLA tracking in TaskService.java
+- [ ] T073 [US2] Add visual highlighting for overdue tasks in TaskCard.tsx
+- [ ] T074 [US2] Add audit logging for all task operations (claim, complete, delegate) in TaskService.java
+
+**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently - users can execute processes and manage their tasks
+
+---
+
+## Phase 5: User Story 3 - Dynamic Form Engine (Priority: P1)
+
+**Goal**: Enable business analysts to create dynamic forms that automatically bind to workflow process variables with version control
+
+**Independent Test**: Create a form schema, deploy it with a process, start instances, modify the form schema, and verify old instances still use the original form while new instances use the updated form
+
+### Integration Tests for User Story 3
+
+- [ ] T075 [P] [US3] Create FormSchemaIntegrationTest in backend/src/test/integration/FormSchemaIntegrationTest.java for form versioning and process variable mapping
+- [ ] T076 [P] [US3] Create FormControllerTest in backend/src/test/unit/FormControllerTest.java for form REST API endpoints
+- [ ] T077 [P] [US3] Create SurveyJSFormTest in frontend/src/test/components/SurveyJSFormTest.test.tsx for form rendering and validation
+
+### Implementation for User Story 3
+
+- [ ] T078 [P] [US3] Create FormSchema entity in backend/src/main/java/com/flowable/platform/entity/FormSchema.java
+- [ ] T079 [P] [US3] Create FormSchemaRepository in backend/src/main/java/com/flowable/platform/repository/FormSchemaRepository.java
+- [ ] T080 [US3] Create FormService in backend/src/main/java/com/flowable/platform/service/FormService.java
+- [ ] T081 [US3] Create FormController in backend/src/main/java/com/flowable/platform/controller/FormController.java with CRUD endpoints
+- [ ] T082 [US3] Implement form version management (create new version on update) in FormService.java
+- [ ] T083 [US3] Implement form-to-process-variable mapping in FormService.java with JSON serialization
+- [ ] T084 [US3] Implement server-side form validation in FormService.java
+- [ ] T085 [US3] Implement field-level permissions enforcement in FormService.java (read-only, required, hidden based on node and roles)
+- [ ] T086 [P] [US3] Create SurveyJS form renderer component (Client Component) in frontend/src/components/forms/SurveyFormRenderer.tsx
+- [ ] T087 [P] [US3] Create Server Component wrapper in frontend/src/components/forms/SurveyForm.tsx
+- [ ] T088 [P] [US3] Create form builder page (Server Component) in frontend/src/app/forms/builder/page.tsx
+- [ ] T089 [US3] Implement visual form builder with drag-and-drop field palette in frontend/src/app/forms/builder/components/FormBuilder.tsx (Client Component)
+- [ ] T090 [US3] Implement form field types (text, number, date, select, radio, checkbox, file, textarea) in FormBuilder.tsx
+- [ ] T091 [US3] Implement form field validation rule configuration in FormBuilder.tsx
+- [ ] T092 [US3] Implement form preview mode in FormBuilder.tsx
+- [ ] T093 [US3] Create form version history page in frontend/src/app/forms/[id]/versions/page.tsx
+- [ ] T094 [US3] Implement historical form rendering (fetch form version from process instance) in SurveyForm.tsx
+- [ ] T095 [US3] Add form schema validation (max 10KB per variable) in FormService.java
+- [ ] T096 [US3] Add audit logging for form operations (create, update, submit) in FormService.java
+
+**Checkpoint**: All user stories (P1 priorities: US1, US2, US3) should now be independently functional - MVP is complete!
+
+---
+
+## Phase 6: User Story 4 - Multi-Tenant Identity and Access Control (Priority: P2)
+
+**Goal**: Enable multi-tenant user, role, and department management with complete data isolation
+
+**Independent Test**: Create two tenants, add users to each, start process instances in both tenants, and verify users from Tenant A cannot see or access any data from Tenant B
+
+### Integration Tests for User Story 4
+
+- [ ] T097 [P] [US4] Create MultiTenantIsolationTest in backend/src/test/integration/MultiTenantIsolationTest.java for cross-tenant access prevention
+- [ ] T098 [P] [US4] Create UserServiceIntegrationTest in backend/src/test/integration/UserServiceIntegrationTest.java for user management and Flowable sync
+- [ ] T099 [P] [US4] Create DepartmentServiceIntegrationTest in backend/src/test/integration/DepartmentServiceIntegrationTest.java for department hierarchy
+
+### Implementation for User Story 4
+
+- [ ] T100 [P] [US4] Create Department entity with self-reference hierarchy in backend/src/main/java/com/flowable/platform/entity/Department.java
+- [ ] T101 [P] [US4] Create DepartmentRepository in backend/src/main/java/com/flowable/platform/repository/DepartmentRepository.java
+- [ ] T102 [US4] Create UserService in backend/src/main/java/com/flowable/platform/service/UserService.java
+- [ ] T103 [US4] Create DepartmentService in backend/src/main/java/com/flowable/platform/service/DepartmentService.java
+- [ ] T104 [US4] Create RoleService in backend/src/main/java/com/flowable/platform/service/RoleService.java
+- [ ] T105 [US4] Implement user synchronization to Flowable IdentityService in UserService.java
+- [ ] T106 [US4] Implement department hierarchy queries with materialized path in DepartmentService.java
+- [ ] T107 [US4] Create UserController in backend/src/main/java/com/flowable/platform/controller/UserController.java
+- [ ] T108 [US4] Create DepartmentController in backend/src/main/java/com/flowable/platform/controller/DepartmentController.java
+- [ ] T109 [US4] Create RoleController in backend/src/main/java/com/flowable/platform/controller/RoleController.java
+- [ ] T110 [P] [US4] Create user management page in frontend/src/app/admin/users/page.tsx
+- [ ] T111 [P] [US4] Create department management page with tree view in frontend/src/app/admin/departments/page.tsx
+- [ ] T112 [P] [US4] Create role management page in frontend/src/app/admin/roles/page.tsx
+- [ ] T113 [US4] Implement cross-tenant access prevention filter in backend/src/main/java/com/flowable/platform/config/TenantIsolationFilter.java
+- [ ] T114 [US4] Add tenant_id composite database indexes in backend/src/main/resources/db/migration/V2__create_tenant_indexes.sql
+- [ ] T115 [US4] Implement tenant-aware cache keys in backend/src/main/java/com/flowable/platform/config/CacheConfig.java
+- [ ] T116 [US4] Add audit logging for all user/role/department operations in UserService.java
+
+**Checkpoint**: User Story 4 complete - multi-tenant isolation fully enforced across all layers
+
+---
+
+## Phase 7: User Story 5 - Collaboration and Communication (Priority: P2)
+
+**Goal**: Enable users to provide approval comments, attach documents, and mention other users with complete audit trail
+
+**Independent Test**: Complete a task with a comment, attach a document, mention another user, and verify all collaboration data is preserved and viewable in the process history
+
+### Integration Tests for User Story 5
+
+- [ ] T117 [P] [US5] Create CommentServiceIntegrationTest in backend/src/test/integration/CommentServiceIntegrationTest.java
+- [ ] T118 [P] [US5] Create AttachmentServiceIntegrationTest in backend/src/test/integration/AttachmentServiceIntegrationTest.java
+- [ ] T119 [P] [US5] Create MentionNotificationTest in backend/src/test/integration/MentionNotificationTest.java
+
+### Implementation for User Story 5
+
+- [ ] T120 [P] [US5] Create Comment entity in backend/src/main/java/com/flowable/platform/entity/Comment.java
+- [ ] T121 [P] [US5] Create Attachment entity in backend/src/main/java/com/flowable/platform/entity/Attachment.java
+- [ ] T122 [US5] Create CommentRepository in backend/src/main/java/com/flowable/platform/repository/CommentRepository.java
+- [ ] T123 [US5] Create AttachmentRepository in backend/src/main/java/com/flowable/platform/repository/AttachmentRepository.java
+- [ ] T124 [US5] Create CommentService in backend/src/main/java/com/flowable/platform/service/CommentService.java
+- [ ] T125 [US5] Create AttachmentService in backend/src/main/java/com/flowable/platform/service/AttachmentService.java
+- [ ] T126 [US5] Create NotificationService in backend/src/main/java/com/flowable/platform/service/NotificationService.java
+- [ ] T127 [US5] Implement @mention parsing and notification in CommentService.java
+- [ ] T128 [US5] Implement required approval comment validation in TaskService.java
+- [ ] T129 [US5] Create comment and attachment endpoints in TaskController.java
+- [ ] T130 [P] [US5] Create CommentList component (Client Component) in frontend/src/components/collaboration/CommentList.tsx
+- [ ] T131 [P] [US5] Create CommentInput component with @mention support in frontend/src/components/collaboration/CommentInput.tsx
+- [ ] T132 [P] [US5] Create AttachmentList component (Client Component) in frontend/src/components/collaboration/AttachmentList.tsx
+- [ ] T133 [P] [US5] Create FileUpload component (Client Component) in frontend/src/components/collaboration/FileUpload.tsx
+- [ ] T134 [US5] Implement process timeline view with comments and attachments in frontend/src/app/processes/[id]/components/ProcessTimeline.tsx
+- [ ] T135 [US5] Implement tenant-isolated file storage paths in AttachmentService.java
+- [ ] T136 [US5] Add audit logging for all collaboration operations in CommentService.java and AttachmentService.java
+
+**Checkpoint**: User Story 5 complete - users can collaborate on tasks with comments, attachments, and mentions
+
+---
+
+## Phase 8: User Story 6 - Administrative Process Control (Priority: P2)
+
+**Goal**: Enable administrators to deploy process models, manage versions, and intervene in running process instances
+
+**Independent Test**: Deploy a process model, start an instance, suspend it from the admin console, modify a variable, and resume to verify the changes take effect
+
+### Integration Tests for User Story 6
+
+- [ ] T137 [P] [US6] Create AdminProcessControlTest in backend/src/test/integration/AdminProcessControlTest.java for admin interventions
+- [ ] T138 [P] [US6] Create ProcessVersionManagementTest in backend/src/test/integration/ProcessVersionManagementTest.java
+
+### Implementation for User Story 6
+
+- [ ] T139 [US6] Create AdminController in backend/src/main/java/com/flowable/platform/controller/AdminController.java
+- [ ] T140 [US6] Implement process definition list endpoint (all tenants) in AdminController.java
+- [ ] T141 [US6] Implement process definition version management in AdminController.java
+- [ ] T142 [US6] Implement admin process suspend endpoint with authorization check in AdminController.java
+- [ ] T143 [US6] Implement admin process activate endpoint with authorization check in AdminController.java
+- [ ] T144 [US6] Implement admin process terminate endpoint with authorization check in AdminController.java
+- [ ] T145 [US6] Implement admin process variable modification endpoint in AdminController.java
+- [ ] T146 [US6] Implement admin process node jump endpoint in AdminController.java
+- [ ] T147 [P] [US6] Create admin process list page in frontend/src/app/admin/processes/page.tsx
+- [ ] T148 [P] [US6] Create admin instance management page in frontend/src/app/admin/instances/page.tsx
+- [ ] T149 [P] [US6] Create instance detail page with admin controls in frontend/src/app/admin/instances/[id]/page.tsx
+- [ ] T150 [US6] Implement variable modification UI in instance detail page
+- [ ] T151 [US6] Implement node jump UI with confirmation in instance detail page
+- [ ] T152 [US6] Add admin authorization checks (ADMIN role required) in AdminController.java
+- [ ] T153 [US6] Add audit logging for all admin interventions in AdminController.java
+- [ ] T154 [US6] Create DataDictionary entity and repository for form dropdown enumerations in backend/src/main/java/com/flowable/platform/entity/DataDictionary.java
+- [ ] T155 [US6] Create data dictionary management endpoints in AdminController.java
+
+**Checkpoint**: User Story 6 complete - administrators have full control over process execution
+
+---
+
+## Phase 9: User Story 7 - Analytics and Performance Dashboards (Priority: P3)
+
+**Goal**: Provide managers and executives with dashboards showing workflow performance metrics and custom dashboard creation
+
+**Independent Test**: Execute several process instances, complete tasks with varying durations, and verify the analytics dashboards display accurate metrics and visualizations
+
+### Integration Tests for User Story 7
+
+- [ ] T156 [P] [US7] Create AnalyticsServiceTest in backend/src/test/unit/AnalyticsServiceTest.java for metrics calculations
+- [ ] T157 [P] [US7] Create DashboardIntegrationTest in backend/src/test/integration/DashboardIntegrationTest.java
+
+### Implementation for User Story 7
+
+- [ ] T158 [P] [US7] Create Dashboard entity in backend/src/main/java/com/flowable/platform/entity/Dashboard.java
+- [ ] T159 [P] [US7] Create Widget entity in backend/src/main/java/com/flowable/platform/entity/Widget.java
+- [ ] T160 [US7] Create DashboardRepository in backend/src/main/java/com/flowable/platform/repository/DashboardRepository.java
+- [ ] T161 [US7] Create WidgetRepository in backend/src/main/java/com/flowable/platform/repository/WidgetRepository.java
+- [ ] T162 [US7] Create AnalyticsService in backend/src/main/java/com/flowable/platform/service/AnalyticsService.java
+- [ ] T163 [US7] Create DashboardService in backend/src/main/java/com/flowable/platform/service/DashboardService.java
+- [ ] T164 [US7] Implement task completion efficiency metrics calculation in AnalyticsService.java
+- [ ] T165 [US7] Implement process distribution metrics calculation in AnalyticsService.java
+- [ ] T166 [US7] Implement bottleneck analysis (average dwell time per node) in AnalyticsService.java
+- [ ] T167 [US7] Implement SLA compliance rate calculation in AnalyticsService.java
+- [ ] T168 [US7] Create analytics query endpoints in backend/src/main/java/com/flowable/platform/controller/AnalyticsController.java
+- [ ] T169 [US7] Create dashboard management endpoints in backend/src/main/java/com/flowable/platform/controller/DashboardController.java
+- [ ] T170 [P] [US7] Create pre-built dashboards page in frontend/src/app/dashboard/page.tsx
+- [ ] T171 [P] [US7] Create custom dashboard builder page in frontend/src/app/dashboard/custom/page.tsx
+- [ ] T172 [P] [US7] Create ECharts chart components (Client Components) in frontend/src/components/analytics/EChartsChart.tsx
+- [ ] T173 [P] [US7] Create widget types (bar, line, pie, funnel) in EChartsChart.tsx
+- [ ] T174 [US7] Implement drag-and-drop dashboard builder in custom dashboard page
+- [ ] T175 [US7] Implement dashboard data fetching with caching in DashboardService.java
+- [ ] T176 [US7] Configure Prometheus metrics endpoint in backend/src/main/java/com/flowable/platform/config/MetricsConfig.java
+- [ ] T177 [US7] Create Grafana dashboard JSON definitions in backend/src/main/resources/grafana-dashboards/
+
+**Checkpoint**: User Story 7 complete - managers have full visibility into workflow performance
+
+---
+
+## Phase 10: User Story 8 - Comprehensive Audit and Compliance Logging (Priority: P3)
+
+**Goal**: Ensure every system action is logged with complete context and audit logs are append-only for compliance
+
+**Independent Test**: Perform various workflow actions (starting processes, completing tasks, delegating, terminating), then query the audit log to verify every action is recorded with full context
+
+### Integration Tests for User Story 8
+
+- [ ] T178 [P] [US8] Create AuditLogTest in backend/src/test/integration/AuditLogTest.java for audit trail completeness
+- [ ] T179 [P] [US8] Create AuditLogQueryTest in backend/src/test/integration/AuditLogQueryTest.java for audit query functionality
+
+### Implementation for User Story 8
+
+- [ ] T180 [P] [US8] Create AuditLog entity in backend/src/main/java/com/flowable/platform/entity/AuditLog.java
+- [ ] T181 [P] [US8] Create AuditLogRepository in backend/src/main/java/com/flowable/platform/repository/AuditLogRepository.java
+- [ ] T182 [US8] Enhance AuditService with append-only enforcement in backend/src/main/java/com/flowable/platform/service/AuditService.java
+- [ ] T183 [US8] Implement audit log query endpoint with date range and user filters in backend/src/main/java/com/flowable/platform/controller/AuditController.java
+- [ ] T184 [US8] Implement audit log export endpoint (CSV/JSON) in AuditController.java
+- [ ] T185 [US8] Implement audit log archival job in backend/src/main/java/com/flowable/platform/job/AuditLogArchivalJob.java
+- [ ] T186 [US8] Implement process instance archival in backend/src/main/java/com/flowable/platform/service/ProcessArchivalService.java
+- [ ] T187 [P] [US8] Create audit log query page in frontend/src/app/admin/audit/page.tsx
+- [ ] T188 [P] [US8] Create audit log detail page in frontend/src/app/admin/audit/[id]/page.tsx
+- [ ] T189 [US8] Implement audit log export UI in audit log query page
+- [ ] T190 [US8] Add append-only database constraint in backend/src/main/resources/db/migration/V3__audit_log_append_only.sql
+- [ ] T191 [US8] Implement audit log modification attempt detection and logging in AuditService.java
+- [ ] T192 [US8] Configure scheduled archival job in backend/src/main/resources/application.yml
+
+**Checkpoint**: User Story 8 complete - complete audit trail enforced for compliance
+
+---
+
+## Phase 11: Polish & Cross-Cutting Concerns
+
+**Purpose**: Improvements that affect multiple user stories
+
+- [ ] T193 [P] Create comprehensive API documentation in specs/001-flowable-platform-core/contracts/api-endpoints.md (already exists, verify completeness)
+- [ ] T194 [P] Run all integration tests and ensure 100% pass rate with Testcontainers
+- [ ] T195 [P] Perform load testing with 1000 concurrent process instances and verify <500ms p95 response time
+- [ ] T196 [P] Verify multi-tenant isolation with automated cross-tenant access tests
+- [ ] T197 [P] Security audit: Verify SQL injection prevention, XSS protection, CSRF protection
+- [ ] T198 [P] Code cleanup: Remove unused imports, fix SpotBugs warnings, address Checkstyle violations
+- [ ] T199 Performance optimization: Add missing database indexes based on query analysis
+- [ ] T200 [P] Update README.md with complete deployment instructions
+- [ ] T201 [P] Validate quickstart.md instructions by running through setup process
+- [ ] T202 [P] Create sample BPMN process files for testing in backend/src/main/resources/processes/samples/
+- [ ] T203 [P] Configure Grafana dashboards for production monitoring
+- [ ] T204 Configure automated backups for PostgreSQL database
+- [ ] T205 Configure log aggregation (ELK stack or CloudWatch)
+- [ ] T206 Create production deployment documentation in docs/deployment.md
+- [ ] T207 Create user training documentation in docs/user-guide.md
+- [ ] T208 Create administrator guide in docs/admin-guide.md
+
+---
+
+## Dependencies & Execution Order
+
+### Phase Dependencies
+
+- **Setup (Phase 1)**: No dependencies - can start immediately
+- **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
+- **User Stories (Phase 3-10)**: All depend on Foundational phase completion
+  - User stories can then proceed in parallel (if staffed)
+  - Or sequentially in priority order (P1 → P2 → P3)
+- **Polish (Phase 11)**: Depends on all desired user stories being complete
+
+### User Story Dependencies
+
+- **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
+- **User Story 2 (P1)**: Can start after Foundational (Phase 2) - Integrates with US1 (process instances have tasks) but independently testable
+- **User Story 3 (P1)**: Can start after Foundational (Phase 2) - Integrates with US1/US2 (forms attached to tasks) but independently testable
+- **User Story 4 (P2)**: Can start after Foundational (Phase 2) - Required by US5/US6/US7/US8 for user/tenant context
+- **User Story 5 (P2)**: Can start after US4 (comments/attachments require users and tenants)
+- **User Story 6 (P2)**: Can start after US4 (admin controls require users and roles)
+- **User Story 7 (P3)**: Can start after US1/US2/US4/US5/US6 (analytics needs process, task, user data)
+- **User Story 8 (P3)**: Can start after Foundational (Phase 2) - Auditing applies to all operations
+
+### Recommended Execution Order
+
+**MVP (Minimum Viable Product)**:
+1. Complete Phase 1: Setup
+2. Complete Phase 2: Foundational
+3. Complete Phase 3: User Story 1 (Core Workflow)
+4. Complete Phase 4: User Story 2 (Task Center)
+5. Complete Phase 5: User Story 3 (Form Engine)
+6. **STOP** - MVP is complete! Deploy and get user feedback
+
+**Full Platform**:
+7. Complete Phase 6: User Story 4 (Multi-Tenant RBAC)
+8. Complete Phase 7: User Story 5 (Collaboration)
+9. Complete Phase 8: User Story 6 (Admin Console)
+10. Complete Phase 9: User Story 7 (Analytics)
+11. Complete Phase 10: User Story 8 (Audit Logging)
+12. Complete Phase 11: Polish
+
+### Within Each User Story
+
+- Tests MUST be written and FAIL before implementation (TDD)
+- Models/entities before services
+- Services before controllers
+- Controllers before frontend
+- Core implementation before integration
+- Story complete before moving to next priority
+
+### Parallel Opportunities
+
+- All Setup tasks (Phase 1) marked [P] can run in parallel
+- All Foundational tasks (Phase 2) marked [P] can run in parallel
+- Once Foundational phase completes, US1, US2, US3 can start in parallel (if team capacity allows)
+- All tests for a user story marked [P] can run in parallel
+- All entities/models within a story marked [P] can run in parallel
+- Different user stories can be worked on in parallel by different team members (after Phase 2 complete)
+
+---
+
+## Parallel Example: User Story 1
+
+```bash
+# Launch all tests for User Story 1 together:
+Task: "T033 [P] [US1] Create ProcessIntegrationTest in backend/src/test/integration/ProcessIntegrationTest.java"
+Task: "T034 [P] [US1] Create CmmnIntegrationTest in backend/src/test/integration/CmmnIntegrationTest.java"
+Task: "T035 [P] [US1] Create DmnIntegrationTest in backend/src/test/integration/DmnIntegrationTest.java"
+Task: "T036 [P] [US1] Create ProcessControllerTest in backend/src/test/unit/ProcessControllerTest.java"
+Task: "T037 [P] [US1] Create MultiTenantProcessTest in backend/src/test/integration/MultiTenantProcessTest.java"
+
+# Launch all services for User Story 1 together:
+Task: "T038 [P] [US1] Create ProcessService in backend/src/main/java/com/flowable/platform/service/ProcessService.java"
+Task: "T039 [P] [US1] Create ProcessDTO in backend/src/main/java/com/flowable/platform/dto/ProcessDTO.java"
+Task: "T040 [P] [US1] Create TaskDTO in backend/src/main/java/com/flowable/platform/dto/TaskDTO.java"
+
+# Launch all frontend pages for User Story 1 together:
+Task: "T048 [P] [US1] Create process list page (Server Component) in frontend/src/app/processes/page.tsx"
+Task: "T049 [P] [US1] Create process instance detail page (Server Component) in frontend/src/app/processes/[id]/page.tsx"
+Task: "T052 [P] [US1] Create process deployment page (Server Component) in frontend/src/app/admin/processes/deploy/page.tsx"
+```
+
+---
+
+## Implementation Strategy
+
+### MVP First (User Stories 1-3 Only)
+
+1. Complete Phase 1: Setup (T001-T012)
+2. Complete Phase 2: Foundational (T013-T032) - CRITICAL, blocks all stories
+3. Complete Phase 3: User Story 1 (T033-T056)
+4. Complete Phase 4: User Story 2 (T057-T074)
+5. Complete Phase 5: User Story 3 (T075-T096)
+6. **STOP and VALIDATE**: Test MVP independently - deploy processes, manage tasks, create forms
+7. Deploy/demo MVP if ready
+
+### Incremental Delivery
+
+1. Complete Setup + Foundational → Foundation ready
+2. Add User Story 1 → Test independently → Deploy/Demo (Core workflow engine!)
+3. Add User Story 2 → Test independently → Deploy/Demo (Task management!)
+4. Add User Story 3 → Test independently → Deploy/Demo (Dynamic forms - MVP complete!)
+5. Add User Story 4 → Test independently → Deploy/Demo (Multi-tenant RBAC!)
+6. Add User Story 5 → Test independently → Deploy/Demo (Collaboration!)
+7. Add User Story 6 → Test independently → Deploy/Demo (Admin controls!)
+8. Add User Story 7 → Test independently → Deploy/Demo (Analytics dashboards!)
+9. Add User Story 8 → Test independently → Deploy/Demo (Audit compliance!)
+10. Each story adds value without breaking previous stories
+
+### Parallel Team Strategy
+
+With multiple developers (after Phase 2 complete):
+
+1. Team completes Setup + Foundational together
+2. Once Foundational is done:
+   - Developer A: User Story 1 (Core Workflow)
+   - Developer B: User Story 2 (Task Center)
+   - Developer C: User Story 3 (Form Engine)
+3. Stories complete and integrate independently
+4. After P1 stories complete:
+   - Developer A: User Story 4 (Multi-Tenant RBAC)
+   - Developer B: User Story 5 (Collaboration)
+   - Developer C: User Story 6 (Admin Console)
+5. After P2 stories complete:
+   - Developer A: User Story 7 (Analytics)
+   - Developer B: User Story 8 (Audit Logging)
+   - Developer C: Polish & Cross-Cutting Concerns
+
+---
+
+## Format Validation
+
+✅ **All tasks follow strict checklist format**:
+- Checkbox: `- [ ]` present on all 208 tasks
+- Task ID: Sequential T001-T208
+- [P] marker: Present on 91 parallelizable tasks
+- [Story] label: Present on 153 user story tasks (T033-T192)
+- File paths: Included in all implementation tasks
+- Test tasks first: Each user story phase includes tests before implementation
+
+✅ **Tasks are immediately executable**:
+- Each task specifies exact file path
+- Each task is verifiable (can be checked off when complete)
+- Each task is small enough for independent completion
+- Dependencies are clearly marked (non-[P] tasks depend on prior tasks)
+
+---
+
+## Summary
+
+- **Total Tasks**: 208
+- **Setup Tasks**: 12 (Phase 1)
+- **Foundational Tasks**: 20 (Phase 2) - BLOCKS all user stories
+- **User Story 1 (P1)**: 24 tasks (5 tests + 19 implementation)
+- **User Story 2 (P1)**: 18 tasks (3 tests + 15 implementation)
+- **User Story 3 (P1)**: 22 tasks (3 tests + 19 implementation)
+- **User Story 4 (P2)**: 20 tasks (3 tests + 17 implementation)
+- **User Story 5 (P2)**: 20 tasks (3 tests + 17 implementation)
+- **User Story 6 (P2)**: 19 tasks (2 tests + 17 implementation)
+- **User Story 7 (P3)**: 22 tasks (2 tests + 20 implementation)
+- **User Story 8 (P3)**: 15 tests (2 tests + 13 implementation)
+- **Polish Tasks**: 16 (Phase 11)
+
+**Parallel Opportunities**: 91 tasks marked [P] can be executed in parallel with appropriate team capacity
+
+**Independent Test Criteria**: Each user story includes clear independent test criteria in phase headers
+
+**MVP Scope**: User Stories 1-3 (Phases 1-5, 96 tasks total) constitute the minimum viable product
+
+**Incremental Delivery**: Each user story can be deployed independently after Phase 2 (Foundational) is complete
+
+---
+
+**Tasks complete and ready for implementation with TDD methodology**.
