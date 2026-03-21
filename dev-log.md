@@ -3,6 +3,25 @@
 
 ---
 
+## [2026-03-21] - PostgreSQL Data Persistence Question
+
+**Timestamp**: 2026-03-21 13:45:00 UTC
+**User Request**:
+> /btw, why i restart postgres container the data still there
+
+**Actions Performed**:
+- ✅ Logged request to dev-log.md (MANDATORY FIRST STEP)
+- ✅ Read docker-compose.yml to check PostgreSQL volume configuration
+- ✅ Identified volume mount configuration for PostgreSQL data persistence
+- ✅ Analyzed Docker volume storage mechanism
+
+**Files Read**:
+- `docker-compose.yml`
+
+**Outcome**: Explained Docker volume persistence mechanism for PostgreSQL data.
+
+---
+
 ## [2026-03-21] - Fix Login Authentication Issue
 
 **Timestamp**: 2026-03-21 13:30:00 UTC
