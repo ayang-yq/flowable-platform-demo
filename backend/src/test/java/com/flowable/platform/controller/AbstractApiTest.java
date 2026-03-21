@@ -5,6 +5,7 @@ import com.flowable.platform.dto.LoginResponse;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,7 +19,7 @@ import static org.hamcrest.Matchers.notNullValue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-abstract class AbstractApiTest {
+public abstract class AbstractApiTest {
 
     static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
 
@@ -34,6 +35,13 @@ abstract class AbstractApiTest {
         System.setProperty("spring.datasource.url", postgres.getJdbcUrl());
         System.setProperty("spring.datasource.username", postgres.getUsername());
         System.setProperty("spring.datasource.password", postgres.getPassword());
+    }
+
+    @AfterAll
+    static void stopContainer() {
+        if (postgres != null && postgres.isRunning()) {
+            postgres.stop();
+        }
     }
 
     @BeforeEach
