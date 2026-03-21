@@ -32,7 +32,7 @@ public class Role {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "permissions")
+    @Column(name = "permissions", columnDefinition = "JSONB")
     private String permissions;
 
     @Column(name = "is_system", nullable = false)

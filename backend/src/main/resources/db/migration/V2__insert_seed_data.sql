@@ -153,11 +153,15 @@ UPDATE departments SET manager_id = '423e4567-e89b-12d3-a456-426614174002' WHERE
 UPDATE departments SET manager_id = '423e4567-e89b-12d3-a456-426614174010' WHERE id = '323e4567-e89b-12d3-a456-426614174010';
 
 -- ============================================
--- SAMPLE FORM SCHEMAS
+-- SAMPLE FORM SCHEMAS (Phase 5 - Dynamic Form Engine)
 -- ============================================
 
--- Leave Request Form
-INSERT INTO form_schemas (id, tenant_id, name, description, version, process_definition_key, task_definition_key, schema_json, process_variable_mapping, is_active, created_by, created_at, updated_at)
+-- Only insert if form_schemas table exists (Phase 5 feature)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'form_schemas') THEN
+        -- Leave Request Form
+        INSERT INTO form_schemas (id, tenant_id, name, description, version, process_definition_key, task_definition_key, schema_json, process_variable_mapping, is_active, created_by, created_at, updated_at)
 VALUES
     ('523e4567-e89b-12d3-a456-426614174000', '123e4567-e89b-12d3-a456-426614174000', 'Leave Request Form', 'Form for submitting leave requests', '1.0.0', 'leaveRequest', 'managerApproval',
     '{
@@ -269,16 +273,23 @@ VALUES
     '{"expenseDate": "expenseDate", "amount": "expenseAmount", "category": "expenseCategory", "description": "expenseDescription"}',
     true, '423e4567-e89b-12d3-a456-426614174000', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT DO NOTHING;
+    END IF;
+END $$;
 
 -- ============================================
 -- AUDIT LOG ENTRIES (seed data setup)
 -- ============================================
 
-INSERT INTO audit_logs (id, tenant_id, user_id, username, timestamp, action_type, entity_type, entity_id, details, created_at)
-VALUES
-    ('623e4567-e89b-12d3-a456-426614174000', '123e4567-e89b-12d3-a456-426614174000', '423e4567-e89b-12d3-a456-426614174000', 'admin', CURRENT_TIMESTAMP, 'SYSTEM_INIT', 'TENANT', '123e4567-e89b-12d3-a456-426614174000', '{"message": "Initial tenant setup completed"}', CURRENT_TIMESTAMP),
-    ('623e4567-e89b-12d3-a456-426614174001', '123e4567-e89b-12d3-a456-426614174000', '423e4567-e89b-12d3-a456-426614174000', 'admin', CURRENT_TIMESTAMP, 'SYSTEM_INIT', 'USER', '423e4567-e89b-12d3-a456-426614174000', '{"message": "Admin user created"}', CURRENT_TIMESTAMP)
-ON CONFLICT DO NOTHING;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'audit_logs') THEN
+        INSERT INTO audit_logs (id, tenant_id, user_id, username, timestamp, action_type, entity_type, entity_id, details, created_at)
+        VALUES
+            ('623e4567-e89b-12d3-a456-426614174000', '123e4567-e89b-12d3-a456-426614174000', '423e4567-e89b-12d3-a456-426614174000', 'admin', CURRENT_TIMESTAMP, 'SYSTEM_INIT', 'TENANT', '123e4567-e89b-12d3-a456-426614174000', '{"message": "Initial tenant setup completed"}', CURRENT_TIMESTAMP),
+            ('623e4567-e89b-12d3-a456-426614174001', '123e4567-e89b-12d3-a456-426614174000', '423e4567-e89b-12d3-a456-426614174000', 'admin', CURRENT_TIMESTAMP, 'SYSTEM_INIT', 'USER', '423e4567-e89b-12d3-a456-426614174000', '{"message": "Admin user created"}', CURRENT_TIMESTAMP)
+        ON CONFLICT DO NOTHING;
+    END IF;
+END $$;
 
 -- ============================================
 -- TENANT ISOLATION VERIFICATION

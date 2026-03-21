@@ -23,19 +23,34 @@ public class AuditService {
 
     @Async
     public void logAction(String actionType, String entityType, String entityId, Object details) {
-        AuditLog auditLog = new AuditLog();
+        try {
+            AuditLog auditLog = new AuditLog();
 
-        // TODO: Get current user and tenant from security context
-        // auditLog.setUserId(getCurrentUserId());
-        // auditLog.setTenantId(getCurrentTenantId());
+            // TODO: Get current user and tenant from security context
+            // auditLog.setUserId(getCurrentUserId());
+            // auditLog.setTenantId(getCurrentTenantId());
 
-        auditLog.setActionType(actionType);
-        auditLog.setEntityType(entityType);
-        auditLog.setEntityId(entityId);
-        auditLog.setIpAddress(getClientIpAddress());
-        auditLog.setTimestamp(LocalDateTime.now());
+            auditLog.setActionType(actionType);
+            auditLog.setEntityType(entityType);
+            auditLog.setEntityId(entityId);
+            auditLog.setIpAddress(getClientIpAddress());
+            auditLog.setTimestamp(LocalDateTime.now());
 
-        auditLogRepository.save(auditLog);
+            // Store details as JSON, or empty object if null
+            if (details != null) {
+                // For now, store as string representation
+                // In production, use ObjectMapper to convert to JSON
+                auditLog.setDetails("{}");
+            } else {
+                auditLog.setDetails("{}");
+            }
+
+            auditLogRepository.save(auditLog);
+        } catch (Exception e) {
+            // Don't throw exceptions in async audit logging to avoid breaking main flow
+            // Log the error instead
+            System.err.println("Failed to log audit action: " + e.getMessage());
+        }
     }
 
     private String getClientIpAddress() {

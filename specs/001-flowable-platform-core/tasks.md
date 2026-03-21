@@ -23,18 +23,18 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create backend project structure with Spring Boot 3.5.x in backend/
-- [ ] T002 Create frontend project structure with Next.js 14+ in frontend/
-- [ ] T003 [P] Configure backend pom.xml with Flowable 7.x, Spring Security 6.x, PostgreSQL, Testcontainers dependencies
-- [ ] T004 [P] Configure frontend package.json with React 18+, SurveyJS, ECharts, Shadcn/UI dependencies
-- [ ] T005 [P] Setup ESLint and TypeScript configuration in frontend/
-- [ ] T006 [P] Setup SpotBugs and Checkstyle configuration in backend/
-- [ ] T007 [P] Create docker-compose.yml with PostgreSQL, backend, and frontend services
-- [ ] T008 [P] Create backend Dockerfile with multi-stage build (Maven → OpenJDK 21 Alpine)
-- [ ] T009 [P] Create frontend Dockerfile with multi-stage build (Node → Nginx Alpine)
-- [ ] T010 [P] Create .env.example with all required environment variables (POSTGRES_PASSWORD, JWT_SECRET, AZURE_CLIENT_ID, etc.)
-- [ ] T011 [P] Create database/init.sql for PostgreSQL initialization
-- [ ] T012 Create README.md with quickstart instructions referencing specs/001-flowable-platform-core/quickstart.md
+- [X] T001 Create backend project structure with Spring Boot 3.5.x in backend/
+- [X] T002 Create frontend project structure with Next.js 14+ in frontend/
+- [X] T003 [P] Configure backend pom.xml with Flowable 7.x, Spring Security 6.x, PostgreSQL, Testcontainers dependencies
+- [X] T004 [P] Configure frontend package.json with React 18+, SurveyJS, ECharts, Shadcn/UI dependencies
+- [X] T005 [P] Setup ESLint and TypeScript configuration in frontend/
+- [X] T006 [P] Setup SpotBugs and Checkstyle configuration in backend/
+- [X] T007 [P] Create docker-compose.yml with PostgreSQL, backend, and frontend services
+- [X] T008 [P] Create backend Dockerfile with multi-stage build (Maven → OpenJDK 21 Alpine)
+- [X] T009 [P] Create frontend Dockerfile with multi-stage build (Node → Nginx Alpine)
+- [X] T010 [P] Create .env.example with all required environment variables (POSTGRES_PASSWORD, JWT_SECRET, AZURE_CLIENT_ID, etc.)
+- [X] T011 [P] Create database/init.sql for PostgreSQL initialization
+- [X] T012 Create README.md with quickstart instructions referencing specs/001-flowable-platform-core/quickstart.md
 
 ---
 
@@ -44,26 +44,26 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T013 Setup multi-tenant database schema with tenant_id column strategy in backend/src/main/resources/db/migration/V1__create_core_tables.sql
-- [ ] T014 [P] Configure Flowable 7.x multi-tenant settings in backend/src/main/resources/application.yml (tenant-id-column-tenant-value: true)
-- [ ] T015 [P] Configure PostgreSQL datasource with HikariCP in backend/src/main/resources/application.yml
-- [ ] T016 [P] Configure Flyway for database migrations in backend/src/main/resources/application.yml
-- [ ] T017 [P] Create Spring Security configuration in backend/src/main/java/com/flowable/platform/config/SecurityConfig.java
-- [ ] T018 [P] Create OAuth2/OIDC configuration in backend/src/main/java/com/flowable/platform/config/OAuth2Config.java
-- [ ] T019 [P] Create multi-tenant context filter in backend/src/main/java/com/flowable/platform/config/MultiTenantFilter.java
-- [ ] T020 [P] Create JWT token service in backend/src/main/java/com/flowable/platform/service/JwtTokenService.java
-- [ ] T021 [P] Create audit logging service in backend/src/main/java/com/flowable/platform/service/AuditService.java
-- [ ] T022 [P] Create error handling controller advice in backend/src/main/java/com/flowable/platform/config/GlobalExceptionHandler.java
-- [ ] T023 [P] Create structured logging configuration in backend/src/main/resources/logback-spring.xml
-- [ ] T024 [P] Create API response wrapper DTOs in backend/src/main/java/com/flowable/platform/dto/
-- [ ] T025 [P] Create Next.js API client utilities in frontend/src/lib/api.ts
-- [ ] T026 [P] Create authentication utilities in frontend/src/lib/auth.ts
-- [ ] T027 Create base entity classes (Tenant, User, Role) with JPA mappings in backend/src/main/java/com/flowable/platform/entity/
-- [ ] T028 Create repository interfaces for base entities in backend/src/main/java/com/flowable/platform/repository/
-- [ ] T029 Create authentication controller in backend/src/main/java/com/flowable/platform/controller/AuthController.java
-- [ ] T030 Create login page (Server Component) in frontend/src/app/login/page.tsx
-- [ ] T031 Create layout component with authentication wrapper in frontend/src/app/layout.tsx
-- [ ] T032 Configure Testcontainers for integration tests in backend/src/test/resources/application-test.yml
+- [X] T013 Setup multi-tenant database schema with tenant_id column strategy in backend/src/main/resources/db/migration/V1__create_core_tables.sql
+- [X] T014 [P] Configure Flowable 7.x multi-tenant settings in backend/src/main/resources/application.yml (tenant-id-column-tenant-value: true)
+- [X] T015 [P] Configure PostgreSQL datasource with HikariCP in backend/src/main/resources/application.yml
+- [X] T016 [P] Configure Flyway for database migrations in backend/src/main/resources/application.yml
+- [X] T017 [P] Create Spring Security configuration in backend/src/main/java/com/flowable/platform/config/SecurityConfig.java
+- [X] T018 [P] Create OAuth2/OIDC configuration in backend/src/main/java/com/flowable/platform/config/OAuth2Config.java
+- [X] T019 [P] Create multi-tenant context filter in backend/src/main/java/com/flowable/platform/config/MultiTenantFilter.java
+- [X] T020 [P] Create JWT token service in backend/src/main/java/com/flowable/platform/service/JwtTokenService.java
+- [X] T021 [P] Create audit logging service in backend/src/main/java/com/flowable/platform/service/AuditService.java
+- [X] T022 [P] Create error handling controller advice in backend/src/main/java/com/flowable/platform/config/GlobalExceptionHandler.java
+- [X] T023 [P] Create structured logging configuration in backend/src/main/resources/logback-spring.xml
+- [X] T024 [P] Create API response wrapper DTOs in backend/src/main/java/com/flowable/platform/dto/
+- [X] T025 [P] Create Next.js API client utilities in frontend/src/lib/api.ts
+- [X] T026 [P] Create authentication utilities in frontend/src/lib/auth.ts
+- [X] T027 Create base entity classes (Tenant, User, Role) with JPA mappings in backend/src/main/java/com/flowable/platform/entity/
+- [X] T028 Create repository interfaces for base entities in backend/src/main/java/com/flowable/platform/repository/
+- [X] T029 Create authentication controller in backend/src/main/java/com/flowable/platform/controller/AuthController.java
+- [X] T030 Create login page (Server Component) in frontend/src/app/login/page.tsx
+- [X] T031 Create layout component with authentication wrapper in frontend/src/app/layout.tsx
+- [X] T032 Configure Testcontainers for integration tests in backend/src/test/resources/application-test.yml
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -77,35 +77,35 @@
 
 ### Integration Tests for User Story 1
 
-- [ ] T033 [P] [US1] Create ProcessIntegrationTest in backend/src/test/integration/ProcessIntegrationTest.java for BPMN process execution
-- [ ] T034 [P] [US1] Create CmmnIntegrationTest in backend/src/test/integration/CmmnIntegrationTest.java for CMMN case instance execution
-- [ ] T035 [P] [US1] Create DmnIntegrationTest in backend/src/test/integration/DmnIntegrationTest.java for DMN decision table evaluation
-- [ ] T036 [P] [US1] Create ProcessControllerTest in backend/src/test/unit/ProcessControllerTest.java for REST API endpoints
-- [ ] T037 [P] [US1] Create MultiTenantProcessTest in backend/src/test/integration/MultiTenantProcessTest.java for tenant isolation verification
-- [ ] T037a [P] [US1] Create CmmnAdHocTaskTest in backend/src/test/integration/CmmnAdHocTaskTest.java for ad-hoc task creation within case instances
+- [X] T033 [P] [US1] Create ProcessIntegrationTest in backend/src/test/integration/ProcessIntegrationTest.java for BPMN process execution
+- [X] T034 [P] [US1] Create CmmnIntegrationTest in backend/src/test/integration/CmmnIntegrationTest.java for CMMN case instance execution
+- [X] T035 [P] [US1] Create DmnIntegrationTest in backend/src/test/integration/DmnIntegrationTest.java for DMN decision table evaluation
+- [X] T036 [P] [US1] Create ProcessControllerTest in backend/src/test/unit/ProcessControllerTest.java for REST API endpoints
+- [X] T037 [P] [US1] Create MultiTenantProcessTest in backend/src/test/integration/MultiTenantProcessTest.java for tenant isolation verification
+- [X] T037a [P] [US1] Create CmmnAdHocTaskTest in backend/src/test/integration/CmmnAdHocTaskTest.java for ad-hoc task creation within case instances
 
 ### Implementation for User Story 1
 
-- [ ] T038 [P] [US1] Create ProcessService in backend/src/main/java/com/flowable/platform/service/ProcessService.java using RuntimeService, TaskService, HistoryService directly
-- [ ] T039 [P] [US1] Create ProcessDTO in backend/src/main/java/com/flowable/platform/dto/ProcessDTO.java
-- [ ] T040 [P] [US1] Create TaskDTO in backend/src/main/java/com/flowable/platform/dto/TaskDTO.java
-- [ ] T041 [US1] Create ProcessController in backend/src/main/java/com/flowable/platform/controller/ProcessController.java with endpoints for starting processes, listing instances, getting details
-- [ ] T042 [US1] Implement process deployment endpoint in ProcessController.java for BPMN/CMMN/DMN XML file upload
-- [ ] T043 [US1] Implement process instance suspension endpoint in ProcessController.java
-- [ ] T044 [US1] Implement process instance activation endpoint in ProcessController.java
-- [ ] T045 [US1] Implement process instance termination endpoint in ProcessController.java
-- [ ] T045a [US1] Implement CMMN ad-hoc task creation endpoint in backend/src/main/java/com/flowable/platform/controller/ProcessController.java to allow users to create tasks within active case instances
-- [ ] T046 [US1] Create process diagram SVG generation service in backend/src/main/java/com/flowable/platform/service/ProcessDiagramService.java
-- [ ] T047 [US1] Implement process diagram endpoint with current node highlighting in ProcessController.java
-- [ ] T048 [P] [US1] Create process list page (Server Component) in frontend/src/app/processes/page.tsx
-- [ ] T049 [P] [US1] Create process instance detail page (Server Component) in frontend/src/app/processes/[id]/page.tsx
-- [ ] T050 [P] [US1] Create bpmn.js process diagram component (Client Component) in frontend/src/components/workflow/ProcessDiagram.tsx with lazy loading
-- [ ] T051 [US1] Implement process diagram current node highlighting in ProcessDiagram.tsx
-- [ ] T052 [P] [US1] Create process deployment page (Server Component) in frontend/src/app/admin/processes/deploy/page.tsx
-- [ ] T053 [US1] Implement BPMN/CMMN/DMN file upload in process deployment page
-- [ ] T054 [US1] Add process variable validation (<10KB per variable) in ProcessService.java
-- [ ] T055 [US1] Add audit logging for all process operations (start, suspend, activate, terminate) in ProcessService.java
-- [ ] T056 [US1] Add error handling for invalid process definitions in ProcessController.java
+- [X] T038 [P] [US1] Create ProcessService in backend/src/main/java/com/flowable/platform/service/ProcessService.java using RuntimeService, TaskService, HistoryService directly
+- [X] T039 [P] [US1] Create ProcessDTO in backend/src/main/java/com/flowable/platform/dto/ProcessDTO.java
+- [X] T040 [P] [US1] Create TaskDTO in backend/src/main/java/com/flowable/platform/dto/TaskDTO.java
+- [X] T041 [US1] Create ProcessController in backend/src/main/java/com/flowable/platform/controller/ProcessController.java with endpoints for starting processes, listing instances, getting details
+- [X] T042 [US1] Implement process deployment endpoint in ProcessController.java for BPMN/CMMN/DMN XML file upload
+- [X] T043 [US1] Implement process instance suspension endpoint in ProcessController.java
+- [X] T044 [US1] Implement process instance activation endpoint in ProcessController.java
+- [X] T045 [US1] Implement process instance termination endpoint in ProcessController.java
+- [X] T045a [US1] Implement CMMN ad-hoc task creation endpoint in backend/src/main/java/com/flowable/platform/controller/ProcessController.java to allow users to create tasks within active case instances
+- [X] T046 [US1] Create process diagram SVG generation service in backend/src/main/java/com/flowable/platform/service/ProcessDiagramService.java
+- [X] T047 [US1] Implement process diagram endpoint with current node highlighting in ProcessController.java
+- [X] T048 [P] [US1] Create process list page (Server Component) in frontend/src/app/processes/page.tsx
+- [X] T049 [P] [US1] Create process instance detail page (Server Component) in frontend/src/app/processes/[id]/page.tsx
+- [X] T050 [P] [US1] Create bpmn.js process diagram component (Client Component) in frontend/src/components/workflow/ProcessDiagram.tsx with lazy loading
+- [X] T051 [US1] Implement process diagram current node highlighting in ProcessDiagram.tsx
+- [X] T052 [P] [US1] Create process deployment page (Server Component) in frontend/src/app/admin/processes/deploy/page.tsx
+- [X] T053 [US1] Implement BPMN/CMMN/DMN file upload in process deployment page
+- [X] T054 [US1] Add process variable validation (<10KB per variable) in ProcessService.java
+- [X] T055 [US1] Add audit logging for all process operations (start, suspend, activate, terminate) in ProcessService.java
+- [X] T056 [US1] Add error handling for invalid process definitions in ProcessController.java
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently - users can deploy BPMN/CMMN/DMN models and execute processes
 

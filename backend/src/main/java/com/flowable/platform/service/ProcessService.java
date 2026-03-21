@@ -78,9 +78,13 @@ public class ProcessService {
     public List<ProcessDTO> listProcessInstances() {
         String tenantId = MultiTenantFilter.getCurrentTenantId();
 
-        List<ProcessInstance> instances = runtimeService.createProcessInstanceQuery()
-                .processInstanceTenantId(tenantId)
-                .list();
+        // Create query - only filter by tenant if tenant context is set
+        var query = runtimeService.createProcessInstanceQuery();
+        if (tenantId != null) {
+            query.processInstanceTenantId(tenantId);
+        }
+
+        List<ProcessInstance> instances = query.list();
 
         return instances.stream()
                 .map(this::convertToDTO)

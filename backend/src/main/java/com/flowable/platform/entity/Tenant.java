@@ -29,7 +29,7 @@ public class Tenant {
     @Column(name = "logo_url")
     private String logoUrl;
 
-    @Column(name = "settings")
+    @Column(name = "settings", columnDefinition = "JSONB")
     private String settings;
 
     @Column(name = "is_active", nullable = false)

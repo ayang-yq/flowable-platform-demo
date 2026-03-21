@@ -3,6 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiClient, ApiResponse } from '@/lib/api';
+import dynamic from 'next/dynamic';
+
+// Dynamically import ProcessDiagram to avoid SSR issues with bpmn-js
+const ProcessDiagram = dynamic(() => import('@/components/workflow/ProcessDiagram'), {
+  ssr: false,
+  loading: () => <div className="h-96 flex items-center justify-center bg-gray-100 rounded-lg">Loading diagram...</div>
+});
 
 interface ProcessDetail {
   processInstanceId: string;
@@ -182,12 +189,10 @@ export default function ProcessDetailPage() {
           )}
         </div>
 
-        {/* Process Diagram Placeholder */}
+        {/* Process Diagram */}
         <div className="mt-6 bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Process Diagram</h2>
-          <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
-            <p className="text-gray-500">Process diagram will be rendered here</p>
-          </div>
+          <ProcessDiagram processInstanceId={process.processInstanceId} />
         </div>
       </main>
     </div>

@@ -36,7 +36,7 @@ Multi-tenant workflow platform built with Flowable 7.x, Spring Boot 3.5.x, and N
 5. **Access application**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:8080/api
-   - Database: localhost:5432
+   - Database: localhost:5433 (mapped from container port 5432 to avoid conflicts with local PostgreSQL)
 
 6. **Default login**
    ```

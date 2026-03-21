@@ -15,14 +15,14 @@ public class AuditLog {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
+    @JoinColumn(name = "tenant_id")
     private Tenant tenant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "username", nullable = false, length = 100)
+    @Column(name = "username", length = 100)
     private String username;
 
     @Column(name = "timestamp", nullable = false)

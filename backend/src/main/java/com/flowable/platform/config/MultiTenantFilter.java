@@ -39,4 +39,12 @@ public class MultiTenantFilter extends OncePerRequestFilter {
     public static void setTenantId(String tenantId) {
         CURRENT_TENANT.set(tenantId);
     }
+
+    public static void setTenantContext(String tenantId) {
+        CURRENT_TENANT.set(tenantId);
+    }
+
+    public static void clearTenantContext() {
+        CURRENT_TENANT.remove();
+    }
 }

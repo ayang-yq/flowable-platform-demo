@@ -68,16 +68,19 @@ class ProcessIntegrationTest {
     void testDeployBpmnProcessDefinition() {
         // Deploy a simple BPMN process
         String processDefinitionKey = "simpleApproval";
-        repositoryService.createDeployment()
+        String deploymentId = repositoryService.createDeployment()
                 .addClasspathResource("processes/simple-approval.bpmn20.xml")
-                .deploy();
+                .deploy()
+                .getId();
 
-        // Verify deployment
-        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
+        // Verify deployment - get the specific deployment we just created
+        List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionKey(processDefinitionKey)
-                .singleResult();
+                .deploymentId(deploymentId)
+                .list();
 
-        assertNotNull(processDefinition);
+        assertFalse(processDefinitions.isEmpty());
+        ProcessDefinition processDefinition = processDefinitions.get(0);
         assertEquals("Simple Approval Process", processDefinition.getName());
     }
 
@@ -118,7 +121,12 @@ class ProcessIntegrationTest {
                 .addClasspathResource("processes/simple-approval.bpmn20.xml")
                 .deploy();
 
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleApproval");
+        // Start process with required variables
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("employeeName", "John Doe");
+        variables.put("reason", "Test approval");
+
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleApproval", variables);
 
         // Get active task
         List<Task> tasks = taskService.createTaskQuery()
@@ -149,7 +157,11 @@ class ProcessIntegrationTest {
                 .addClasspathResource("processes/simple-approval.bpmn20.xml")
                 .deploy();
 
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleApproval");
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("employeeName", "John Doe");
+        variables.put("reason", "Test approval");
+
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleApproval", variables);
 
         // Suspend process instance
         runtimeService.suspendProcessInstanceById(processInstance.getId());
@@ -171,7 +183,11 @@ class ProcessIntegrationTest {
                 .addClasspathResource("processes/simple-approval.bpmn20.xml")
                 .deploy();
 
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleApproval");
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("employeeName", "John Doe");
+        variables.put("reason", "Test approval");
+
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleApproval", variables);
         runtimeService.suspendProcessInstanceById(processInstance.getId());
 
         // Activate process instance
@@ -194,7 +210,11 @@ class ProcessIntegrationTest {
                 .addClasspathResource("processes/simple-approval.bpmn20.xml")
                 .deploy();
 
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleApproval");
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("employeeName", "John Doe");
+        variables.put("reason", "Test approval");
+
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleApproval", variables);
 
         // Delete process instance (terminate)
         runtimeService.deleteProcessInstance(processInstance.getId(), "Test termination");
