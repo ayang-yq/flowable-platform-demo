@@ -8,6 +8,7 @@ import io.restassured.path.json.config.JsonPathConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Timeout;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -15,6 +16,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static io.restassured.config.JsonConfig.jsonConfig;
 import static io.restassured.path.json.config.JsonPathConfig.NumberReturnType.BIG_DECIMAL;
@@ -47,6 +49,7 @@ import static org.hamcrest.Matchers.notNullValue;
  */
 @DisplayName("Abstract Integration Test Base")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Timeout(value = 60, unit = TimeUnit.SECONDS)
 public abstract class AbstractIntegrationTest {
 
     static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")

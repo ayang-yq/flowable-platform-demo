@@ -115,7 +115,7 @@ Tests run automatically in continuous integration pipeline to prevent broken cod
 ### Measurable Outcomes
 
 - **SC-001**: Developers can run the full test suite locally and receive results within 15 minutes
-- **SC-002**: Unit tests provide at least 70% code coverage for business logic layer
+- **SC-002**: Unit tests provide at least 80% code coverage for service layer (per constitution §Dev Workflow) and 60% for utility/helper classes
 - **SC-003**: API tests cover all public endpoints with at least one happy path and one error path test
 - **SC-004**: Test execution reports clearly indicate which tests failed and why
 - **SC-005**: New developers can set up and run tests within 30 minutes of joining the project
@@ -140,4 +140,4 @@ Tests run automatically in continuous integration pipeline to prevent broken cod
 - Security penetration testing (specialized tools and expertise required)
 - Contract testing for API versioning (can be added as future enhancement)
 - Test reporting dashboards or visualization (CI/CD integration is sufficient for now)
-- Mock servers for external API dependencies (can be added as needed)
+- Dedicated shared mock server infrastructure for external API dependencies (WireMock is used locally per-test via FR-012; a centralized mock service is not in scope)

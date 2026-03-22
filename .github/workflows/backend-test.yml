@@ -69,6 +69,9 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/flowable_platform
           SPRING_DATASOURCE_USERNAME: flowable
           SPRING_DATASOURCE_PASSWORD: flowable
+          # T038: Testcontainers CI/CD configuration
+          TESTCONTAINERS_RYUK_DISABLED: 'true'
+          DOCKER_HOST: unix:///var/run/docker.sock
 
       - name: Upload test results
         if: always()

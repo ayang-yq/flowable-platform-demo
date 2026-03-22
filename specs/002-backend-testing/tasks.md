@@ -55,6 +55,7 @@
 - [x] T018 Create test user fixtures SQL in backend/src/test/resources/fixtures/sql/test_users.sql (test-admin, test-user, test-guest, test-inactive) ✅
 - [x] T019 Create TestDataBuilder in backend/src/test/java/com/flowable/platform/test/builder/TestDataBuilder.java ✅
 - [x] T020 Create custom UserAssert in backend/src/test/java/com/flowable/platform/test/assertions/UserAssert.java ✅
+- [x] T020a [P] Configure fail-fast test behavior: disable retry plugins, set JUnit 5 @Timeout defaults in backend/src/test/java/com/flowable/platform/test/config/TestConfig.java, and add surefire-plugin `<rerunFailingTestsCount>0</rerunFailingTestsCount>` to backend/pom.xml [FR-008] ✅
 
 **Checkpoint**: Foundation ready - base test classes, utilities, and fixtures available for all user stories ✅ COMPLETE
 
@@ -72,8 +73,8 @@
 - [x] T022 [P] Create example service unit test BusinessCalendarServiceTest.java in backend/src/test/java/com/flowable/platform/test/unit/service/BusinessCalendarServiceTest.java ✅
 - [x] T023 [P] Create example repository unit test UserRepositoryTest.java in backend/src/test/java/com/flowable/platform/test/unit/repository/UserRepositoryTest.java ✅
 - [x] T024 [P] Create example utility unit test DateTimeUtilsTest.java in backend/src/test/java/com/flowable/platform/test/unit/util/DateTimeUtilsTest.java ✅
-- [ ] T025 Add unit test execution target to quickstart.md with examples (mvn test -Dtest, ./gradlew test --tests)
-- [ ] T026 Document unit test best practices in quickstart.md (Given-When-Then, test data builders, avoid over-mocking)
+- [x] T025 Add unit test execution target to quickstart.md with examples (mvn test -Dtest, ./gradlew test --tests) ✅ (already in quickstart.md)
+- [x] T026 Document unit test best practices in quickstart.md (Given-When-Then, test data builders, avoid over-mocking) ✅ (already in quickstart.md)
 
 **Checkpoint**: At this point, User Story 1 is complete - developers can write and run unit tests locally
 
@@ -97,6 +98,8 @@
 - [x] T034 Document REST Assured usage in quickstart.md (given-when-then syntax, JSON path, authentication) ✅ (already documented in quickstart.md)
 - [x] T035 Document Testcontainers usage in quickstart.md (Docker requirements, container lifecycle, reuse mode) ✅ (already documented in quickstart.md)
 - [x] T036 Add troubleshooting section to quickstart.md (Docker issues, REST Assured path matching, port conflicts) ✅ (already in quickstart.md)
+- [x] T036a [P] Create API test example for multipart file upload endpoint in backend/src/test/java/com/flowable/platform/test/integration/controller/FileUploadIntegrationTest.java (REST Assured multipart, content-type validation) [FR-005] ✅
+- [x] T036b [P] Create API test example for form-data submission in backend/src/test/java/com/flowable/platform/test/integration/controller/FormDataIntegrationTest.java (application/x-www-form-urlencoded) [FR-005] ✅
 
 **Checkpoint**: At this point, User Story 2 is complete - developers can write and run API tests with real HTTP calls
 
@@ -111,11 +114,11 @@
 ### Implementation for User Story 3
 
 - [x] T037 Create GitHub Actions workflow file in .github/workflows/test.yml (runs tests on push/PR, PostgreSQL service, test execution) ✅ (created as backend-test.yml)
-- [ ] T038 [P] Configure Testcontainers in CI/CD to use Docker service (GitHub Actions PostgreSQL container configuration)
-- [ ] T039 [P] Add test report generation to pom.xml (JaCoCo for coverage, Surefire/Failsafe for test results)
-- [ ] T040 [P] Add test coverage report artifact upload to GitHub Actions workflow
-- [ ] T041 Configure branch protection rules documentation (require tests to pass before merge - document setup instructions)
-- [ ] T042 Add test execution documentation to quickstart.md (CI/CD integration, local development vs. CI differences)
+- [x] T038 [P] Configure Testcontainers in CI/CD to use Docker service (GitHub Actions PostgreSQL container configuration) ✅
+- [x] T039 [P] Add test report generation to pom.xml (JaCoCo for coverage, Surefire/Failsafe for test results) ✅
+- [x] T040 [P] Add test coverage report artifact upload to GitHub Actions workflow ✅ (already configured in backend-test.yml)
+- [x] T041 Configure branch protection rules documentation (require tests to pass before merge - document setup instructions) ✅
+- [x] T042 Add test execution documentation to quickstart.md (CI/CD integration, local development vs. CI differences) ✅
 
 **Checkpoint**: At this point, User Story 3 is complete - CI/CD pipeline runs tests automatically
 
@@ -125,14 +128,15 @@
 
 **Purpose**: Documentation, coverage targets, and developer experience improvements
 
-- [ ] T043 [P] Update CLAUDE.md with testing framework information (if not already updated by plan workflow)
-- [ ] T044 [P] Create comprehensive testing guide in backend/src/test/resources/README.md (how to write tests, common patterns, troubleshooting)
-- [ ] T045 Add JaCoCo coverage configuration to pom.xml (70% business logic target)
-- [ ] T046 [P] Add test execution time logging to identify slow tests
-- [ ] T047 Create test data builder examples in backend/src/test/resources/fixtures/README.md
-- [ ] T048 Document multi-tenant testing patterns in quickstart.md (tenant context switching, isolation validation)
-- [ ] T049 Add WireMock usage examples for external service stubbing in quickstart.md
-- [ ] T050 Verify all test examples run successfully locally (manual validation checkpoint)
+- [x] T043 [P] Update CLAUDE.md with testing framework information (if not already updated by plan workflow) ✅
+- [x] T044 [P] Create comprehensive testing guide in backend/src/test/resources/README.md (how to write tests, common patterns, troubleshooting) ✅
+- [x] T045 Add JaCoCo coverage configuration to pom.xml (80% service layer, 60% utilities - per constitution §Dev Workflow) ✅
+- [x] T046 [P] Add test execution time logging to identify slow tests ✅ (configured via surefire reportFormat=plain)
+- [x] T046a Configure test execution timeouts: add @Timeout(value = 30, unit = SECONDS) default in AbstractUnitTest.java and @Timeout(value = 60, unit = SECONDS) in AbstractIntegrationTest.java; configure surefire-plugin with `<forkedProcessExitTimeoutInSeconds>300</forkedProcessExitTimeoutInSeconds>` for unit tests and failsafe-plugin with `<forkedProcessExitTimeoutInSeconds>600</forkedProcessExitTimeoutInSeconds>` for integration tests [FR-014] ✅
+- [x] T047 Create test data builder examples in backend/src/test/resources/fixtures/README.md ✅
+- [x] T048 Document multi-tenant testing patterns in quickstart.md (tenant context switching, isolation validation) ✅ (already in quickstart.md)
+- [x] T049 Add WireMock usage examples for external service stubbing in quickstart.md ✅ (already in quickstart.md)
+- [ ] T050 Verify all test examples run successfully locally (manual validation checkpoint) ⚠️ (blocked by local SSL/network issue - requires manual run when Maven can reach central repo)
 
 **Checkpoint**: All documentation complete, developer experience optimized
 
@@ -210,7 +214,7 @@ This delivers:
 - This feature IS about testing, so "test tasks" ARE the implementation tasks
 - Each task creates test infrastructure or example tests
 - Manual verification: Run the example tests to ensure they work
-- Coverage target: 70% business logic (validate with JaCoCo)
+- Coverage target: 80% service layer, 60% utilities (validate with JaCoCo)
 
 ---
 

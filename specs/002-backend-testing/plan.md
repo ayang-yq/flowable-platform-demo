@@ -25,7 +25,7 @@ Establish comprehensive testing infrastructure for the Flowable platform backend
 **Project Type**: Web service (multi-tenant workflow platform)
 **Performance Goals**: Unit tests complete in < 5 minutes total, API tests complete in < 10 minutes total, full test suite < 15 minutes
 **Constraints**: Multi-tenant data isolation, Flowable-native services, transactional test boundaries, fail-fast test reliability
-**Scale/Scope**: Multi-tenant SaaS testing infrastructure supporting 70% code coverage for business logic
+**Scale/Scope**: Multi-tenant SaaS testing infrastructure supporting 80% code coverage for service layer per constitution
 
 ## Constitution Check
 

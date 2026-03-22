@@ -470,11 +470,11 @@ open target/site/jacoco/index.html
 open build/reports/jacoco/test/html/index.html
 ```
 
-### Coverage Targets
+### Coverage Targets (per constitution §Dev Workflow)
 
-- **Business Logic (Services)**: 70% minimum
-- **Controllers**: 80% minimum (all endpoints covered)
-- **Repositories**: 60% minimum (basic CRUD operations)
+- **Service Layer**: 80% minimum (enforced by JaCoCo)
+- **Controllers**: All public endpoints with happy path + error path
+- **Utilities**: 60% minimum (enforced by JaCoCo)
 
 ## Debugging Tests
 
@@ -590,6 +590,36 @@ jobs:
 - Check Docker daemon logs
 - Verify sufficient disk space and memory
 - Try: `docker system prune -f`
+
+## CI/CD Integration Details
+
+### GitHub Actions Workflow
+
+The project uses `.github/workflows/backend-test.yml` which runs:
+1. **Unit tests**: `mvn test -Dtest="com.flowable.platform.test.unit.**"`
+2. **Integration tests**: `mvn verify -Dtest="com.flowable.platform.test.integration.**"`
+3. **Coverage report**: JaCoCo report generated and uploaded as artifact
+4. **Build**: Maven package (only if tests pass)
+5. **Security scan**: SpotBugs + OWASP dependency-check
+
+### Local vs CI Differences
+
+| Aspect | Local | CI/CD |
+|--------|-------|-------|
+| Database | Testcontainers (Docker) | PostgreSQL service container |
+| Docker | Docker Desktop required | GitHub Actions Docker |
+| Testcontainers Ryuk | Enabled (cleanup) | Disabled (`TESTCONTAINERS_RYUK_DISABLED=true`) |
+| Coverage | Optional (`mvn verify jacoco:report`) | Automatic with artifact upload |
+
+### Branch Protection Rules Setup
+
+To enforce tests before merge (GitHub → Settings → Branches → Branch protection rules):
+
+1. Select branch: `main` (or `develop`)
+2. Enable "Require status checks to pass before merging"
+3. Add required checks: `Backend Tests / Backend Tests`
+4. Enable "Require branches to be up to date before merging"
+5. Optionally enable "Require pull request reviews before merging"
 
 ## Resources
 
