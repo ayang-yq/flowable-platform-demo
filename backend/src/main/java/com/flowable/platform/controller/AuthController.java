@@ -50,8 +50,8 @@ public class AuthController {
         Tenant tenant = tenantRepository.findActiveByCode(request.getTenantCode())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid tenant"));
 
-        // Find user by tenant and username
-        User user = userRepository.findActiveByTenantIdAndUsername(tenant.getId(), request.getUsername())
+        // Find user by tenant and username (with roles eagerly fetched)
+        User user = userRepository.findActiveByTenantIdAndUsernameWithRoles(tenant.getId(), request.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
 
         // Verify password
@@ -87,8 +87,8 @@ public class AuthController {
         // Get current username from security context
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // Look up the User by username and tenant
-        User user = userRepository.findActiveByTenantIdAndUsername(UUID.fromString(tenantId), username)
+        // Look up the User by username and tenant (with roles eagerly fetched)
+        User user = userRepository.findActiveByTenantIdAndUsernameWithRoles(UUID.fromString(tenantId), username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         // Look up the Tenant by ID
