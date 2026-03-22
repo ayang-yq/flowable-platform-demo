@@ -83,19 +83,25 @@ flowable:
   async-executor-activate: true
   async-history-enabled: true
 
-  # Process definitions
+  # Process definitions auto-deploy from classpath:/processes/
+  process-definition-location-prefix: classpath*:/processes/**/
+  check-process-definitions: true
   process:
     definition-cache-limit: 100
     enable-safe-xml: true
 
-  # CMMN engine
+  # CMMN engine - deploy .cmmn files from /processes/ instead of default /cases/
   cmmn:
     enabled: true
     async-executor-activate: true
+    resource-location: classpath*:/processes/**/
+    deploy-resources: true
 
-  # DMN engine
+  # DMN engine - deploy .dmn files from /processes/ instead of default /dmn/
   dmn:
     enabled: true
+    resource-location: classpath*:/processes/**/
+    deploy-resources: true
 
   # Content engine
   content:

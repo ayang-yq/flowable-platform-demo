@@ -84,7 +84,7 @@
     </sequenceFlow>
     <sequenceFlow id="flow4" sourceRef="amountCheckGateway" targetRef="directorApproval">
       <conditionExpression xsi:type="tFormalExpression">
-        ${amount > 5000}
+        ${amount &gt; 5000}
       </conditionExpression>
     </sequenceFlow>
 

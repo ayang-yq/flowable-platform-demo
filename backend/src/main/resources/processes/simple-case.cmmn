@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="http://www.omg.org/spec/CMMN/20151109/DMN"
-             xmlns:cmmn="http://www.omg.org/spec/CMMN/20151109/MODEL"
-             xmlns:flowable="http://flowable.org/bpmn"
+<definitions xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL"
+             xmlns:flowable="http://flowable.org/cmmn"
              targetNamespace="http://flowable.org/cmmn">
 
   <case id="simpleCase" name="Simple Case">
     <casePlanModel id="casePlanModel" name="Case Plan Model">
       <planItem id="planItemHumanTask" name="Review Case" definitionRef="humanTask"/>
-      <humanTask id="humanTask" name="Review Case" isBlocking="true"/>
       <planItem id="planItemMilestone" name="Case Completed" definitionRef="milestone"/>
+      <humanTask id="humanTask" name="Review Case" flowable:assignee="${initiator}" isBlocking="true"/>
       <milestone id="milestone" name="Case Completed"/>
     </casePlanModel>
   </case>
