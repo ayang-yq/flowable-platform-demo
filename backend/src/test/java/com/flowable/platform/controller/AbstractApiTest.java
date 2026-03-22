@@ -1,10 +1,11 @@
 package com.flowable.platform.controller;
 
-import com.flowable.platform.dto.LoginRequest;
+import com.flowable.platform.service.JwtTokenService;
+import com.flowable.platform.test.config.TestTenantConfig;
 import io.restassured.RestAssured;
-import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -13,7 +14,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import static io.restassured.config.JsonConfig.jsonConfig;
 import static io.restassured.path.json.config.JsonPathConfig.NumberReturnType.BIG_DECIMAL;
-import static org.hamcrest.Matchers.notNullValue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class AbstractApiTest {
@@ -30,6 +30,9 @@ public abstract class AbstractApiTest {
 
     @LocalServerPort
     protected int port;
+
+    @Autowired
+    protected JwtTokenService jwtTokenService;
 
     protected String adminToken;
     protected String userToken;
@@ -49,43 +52,10 @@ public abstract class AbstractApiTest {
         RestAssured.port = port;
         RestAssured.basePath = "";
 
-        // Login as admin
-        LoginRequest adminLogin = new LoginRequest();
-        adminLogin.setUsername("admin");
-        adminLogin.setTenantCode("tenant-1");
-        adminLogin.setPassword("admin123");
-
-        Response adminResponse = RestAssured.given()
-                .contentType("application/json")
-                .body(adminLogin)
-                .when()
-                .post("/api/auth/login")
-                .then()
-                .statusCode(200)
-                .body("data.token", notNullValue())
-                .extract()
-                .response();
-
-        adminToken = adminResponse.path("data.token");
-
-        // Login as regular user
-        LoginRequest userLogin = new LoginRequest();
-        userLogin.setUsername("user");
-        userLogin.setTenantCode("tenant-1");
-        userLogin.setPassword("user123");
-
-        Response userResponse = RestAssured.given()
-                .contentType("application/json")
-                .body(userLogin)
-                .when()
-                .post("/api/auth/login")
-                .then()
-                .statusCode(200)
-                .body("data.token", notNullValue())
-                .extract()
-                .response();
-
-        userToken = userResponse.path("data.token");
+        // Generate test JWT tokens directly
+        String tenantId = TestTenantConfig.TEST_TENANT_ID.toString();
+        adminToken = jwtTokenService.generateToken("admin", tenantId);
+        userToken = jwtTokenService.generateToken("user", tenantId);
     }
 
     protected RequestSpecification givenWithAuth(String token) {

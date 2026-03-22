@@ -36,7 +36,7 @@ class TaskControllerIntegrationTest extends AbstractApiTest {
                 .get("/api/tasks/my-tasks")
             .then()
                 .statusCode(200)
-                .body("success", equalTo(true))
+                .body("code", equalTo("SUCCESS"))
                 .body("data", notNullValue());
         }
 
@@ -63,7 +63,7 @@ class TaskControllerIntegrationTest extends AbstractApiTest {
                 .get("/api/tasks/my-tasks")
             .then()
                 .statusCode(200)
-                .body("success", equalTo(true));
+                .body("code", equalTo("SUCCESS"));
         }
 
         @Test
@@ -77,7 +77,7 @@ class TaskControllerIntegrationTest extends AbstractApiTest {
                 .get("/api/tasks/my-tasks")
             .then()
                 .statusCode(200)
-                .body("success", equalTo(true));
+                .body("code", equalTo("SUCCESS"));
         }
     }
 
@@ -202,7 +202,7 @@ class TaskControllerIntegrationTest extends AbstractApiTest {
                 .get("/api/tasks/expiration-alerts")
             .then()
                 .statusCode(200)
-                .body("success", equalTo(true));
+                .body("code", equalTo("SUCCESS"));
         }
 
         @Test

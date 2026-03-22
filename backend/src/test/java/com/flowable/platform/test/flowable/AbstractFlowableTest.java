@@ -1,7 +1,6 @@
 package com.flowable.platform.test.flowable;
 
 import com.flowable.platform.test.integration.AbstractIntegrationTest;
-import com.flowable.platform.test.util.TestTenantContext;
 import org.flowable.engine.HistoryService;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
@@ -10,8 +9,11 @@ import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,12 +37,14 @@ public abstract class AbstractFlowableTest extends AbstractIntegrationTest {
     @Autowired
     protected HistoryService historyService;
 
-    @Autowired
-    protected TestTenantContext testTenantContext;
-
     @BeforeEach
     void setUpFlowableTest() {
         testTenantContext.setTestTenant();
+
+        // Set up SecurityContext for service-layer tests
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken("test-user", null, Collections.emptyList());
+        SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
     /**

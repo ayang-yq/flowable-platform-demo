@@ -8,7 +8,7 @@
 
         <startEvent id="startEvent" name="Start"/>
 
-        <userTask id="testUserTask" name="Test User Task" flowable:assignee="${initiator}">
+        <userTask id="testUserTask" name="Test User Task">
             <documentation>Test task for integration testing</documentation>
         </userTask>
 

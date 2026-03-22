@@ -1,14 +1,14 @@
 package com.flowable.platform.test.integration;
 
+import com.flowable.platform.service.JwtTokenService;
 import com.flowable.platform.test.config.TestTenantConfig;
 import com.flowable.platform.test.util.TestTenantContext;
 import io.restassured.RestAssured;
-import io.restassured.config.JsonConfig;
-import io.restassured.path.json.config.JsonPathConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 import static io.restassured.config.JsonConfig.jsonConfig;
 import static io.restassured.path.json.config.JsonPathConfig.NumberReturnType.BIG_DECIMAL;
-import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * Base class for integration tests using REST Assured and Testcontainers.
@@ -65,6 +64,9 @@ public abstract class AbstractIntegrationTest {
     @LocalServerPort
     protected int port;
 
+    @Autowired
+    protected JwtTokenService jwtTokenService;
+
     protected static TestTenantContext testTenantContext;
     protected String adminToken;
     protected String userToken;
@@ -92,6 +94,11 @@ public abstract class AbstractIntegrationTest {
 
         // Set test tenant
         testTenantContext.setTestTenant();
+
+        // Generate test JWT tokens
+        String tenantId = TestTenantConfig.TEST_TENANT_ID.toString();
+        adminToken = jwtTokenService.generateToken("test-admin", tenantId);
+        userToken = jwtTokenService.generateToken("test-user", tenantId);
     }
 
     /**

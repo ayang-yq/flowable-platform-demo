@@ -3,10 +3,8 @@ package com.flowable.platform.test.integration.service;
 import com.flowable.platform.dto.TaskDTO;
 import com.flowable.platform.service.TaskManagementService;
 import com.flowable.platform.test.flowable.AbstractFlowableTest;
-import com.flowable.platform.test.util.TestTenantContext;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,22 +27,19 @@ class TaskServiceIntegrationTest extends AbstractFlowableTest {
     @Autowired
     private TaskManagementService taskManagementService;
 
-    @Autowired
-    private TestTenantContext testTenantContext;
-
-    @BeforeEach
-    void setUp() {
-        testTenantContext.setTestTenant();
-    }
-
     @Test
     @DisplayName("Should get my tasks")
     void shouldGetMyTasks() {
-        // Given - a process with tasks assigned to test user
-        String processKey = "test-simple-process";
+        // Given - a process with task claimed by test user
         deployProcess("test-simple-process.bpmn20.xml");
 
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey(processKey);
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey("test-simple-process");
+
+        // Claim the task so getMyTasks finds it
+        Task task = taskService.createTaskQuery()
+                .processInstanceId(pi.getId())
+                .singleResult();
+        taskManagementService.claimTask(task.getId());
 
         // When
         Page<TaskDTO> tasks = taskManagementService.getMyTasks(
@@ -59,10 +54,9 @@ class TaskServiceIntegrationTest extends AbstractFlowableTest {
     @DisplayName("Should claim unassigned task")
     void shouldClaimUnassignedTask() {
         // Given - process with unassigned task
-        String processKey = "test-claim-process";
         deployProcess("test-simple-process.bpmn20.xml");
 
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey(processKey);
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey("test-simple-process");
         Task unassignedTask = taskService.createTaskQuery()
                 .processInstanceId(pi.getId())
                 .singleResult();
@@ -81,10 +75,9 @@ class TaskServiceIntegrationTest extends AbstractFlowableTest {
     @DisplayName("Should complete task with variables")
     void shouldCompleteTaskWithVariables() {
         // Given
-        String processKey = "test-complete-process";
         deployProcess("test-simple-process.bpmn20.xml");
 
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey(processKey);
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey("test-simple-process");
         Task task = taskService.createTaskQuery()
                 .processInstanceId(pi.getId())
                 .singleResult();
@@ -120,10 +113,9 @@ class TaskServiceIntegrationTest extends AbstractFlowableTest {
     @DisplayName("Should delegate task to another user")
     void shouldDelegateTask() {
         // Given
-        String processKey = "test-delegate-process";
         deployProcess("test-simple-process.bpmn20.xml");
 
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey(processKey);
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey("test-simple-process");
         Task task = taskService.createTaskQuery()
                 .processInstanceId(pi.getId())
                 .singleResult();
@@ -146,10 +138,9 @@ class TaskServiceIntegrationTest extends AbstractFlowableTest {
     @DisplayName("Should add CC users to task")
     void shouldAddCcUsers() {
         // Given
-        String processKey = "test-cc-process";
         deployProcess("test-simple-process.bpmn20.xml");
 
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey(processKey);
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey("test-simple-process");
         Task task = taskService.createTaskQuery()
                 .processInstanceId(pi.getId())
                 .singleResult();
@@ -168,10 +159,9 @@ class TaskServiceIntegrationTest extends AbstractFlowableTest {
     @DisplayName("Should get tasks with expiration alerts")
     void shouldGetTasksWithExpirationAlerts() {
         // Given - tasks with due dates (some overdue, some approaching)
-        String processKey = "test-alerts-process";
         deployProcess("test-simple-process.bpmn20.xml");
 
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey(processKey);
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey("test-simple-process");
         Task task = taskService.createTaskQuery()
                 .processInstanceId(pi.getId())
                 .singleResult();
@@ -190,10 +180,9 @@ class TaskServiceIntegrationTest extends AbstractFlowableTest {
     @DisplayName("Should check if task is overdue")
     void shouldCheckIfTaskIsOverdue() {
         // Given
-        String processKey = "test-overdue-process";
         deployProcess("test-simple-process.bpmn20.xml");
 
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey(processKey);
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey("test-simple-process");
         Task task = taskService.createTaskQuery()
                 .processInstanceId(pi.getId())
                 .singleResult();
