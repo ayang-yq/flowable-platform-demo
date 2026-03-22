@@ -67,7 +67,7 @@ export default function ProcessDiagram({
         const BpmnJS = (await import('bpmn-js/lib/NavigatedViewer')).default;
 
         viewer = new BpmnJS({
-          container: containerRef.current,
+          container: containerRef.current!,
           height: 500,
           width: '100%',
         });

@@ -442,8 +442,6 @@ describe('SurveyJSFormTest', () => {
     });
 
     test('should announce validation errors to screen readers', async () => {
-      const onComplete = jest.fn();
-
       render(<SurveyFormRenderer schema={mockFormSchema} onComplete={jest.fn()} />);
 
       const completeButton = screen.getByTestId('complete-survey');

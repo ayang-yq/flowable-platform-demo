@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Model } from 'survey-core';
 import { Survey } from 'survey-react-ui';
 import 'survey-core/defaultV2.min.css';
-import { FormSchema as FormSchemaType } from '@/types/form';
+
+
 
 interface SurveyFormRendererProps {
   schema: any;
@@ -61,6 +62,7 @@ export default function SurveyFormRenderer({
 
       // Handle data changes
       if (onDataChange) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         model.onValueChanged.add((sender: any, options: any) => {
           onDataChange(sender.data);
         });

@@ -19,7 +19,7 @@ export default function LoginPage() {
 
     try {
       await authService.login({ username, password, tenantCode });
-      router.push('/tasks');
+      router.push('/home');
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {

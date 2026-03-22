@@ -23,6 +23,7 @@ export default function TaskCard({
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date();
   const isHighPriority = task.priority >= 70;
   const isMediumPriority = task.priority >= 40 && task.priority < 70;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isLowPriority = task.priority < 40;
 
   const getPriorityBadge = () => {

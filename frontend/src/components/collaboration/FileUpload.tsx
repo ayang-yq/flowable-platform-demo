@@ -23,7 +23,7 @@ export default function FileUpload({ onUpload, accept = '*/*', maxSize = 10 * 10
     setIsUploading(true);
     try {
       await onUpload(file);
-    } catch (err) {
+    } catch {
       setError('Upload failed. Please try again.');
     } finally {
       setIsUploading(false);

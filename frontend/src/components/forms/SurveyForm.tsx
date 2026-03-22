@@ -62,7 +62,7 @@ export default async function SurveyForm({
 
     // Parse JSON schema
     parsedSchema = JSON.parse(formSchema.schema);
-  } catch (error) {
+  } catch {
     return (
       <div className="bg-red-50 border-l-4 border-red-400 p-4">
         <div className="flex">

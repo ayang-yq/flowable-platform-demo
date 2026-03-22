@@ -7,6 +7,8 @@ Auto-generated from all feature plans. Last updated: 2026-03-22
 - PostgreSQL 15+ (multi-tenant schema strategy) (002-backend-testing)
 - Java 21 + Spring Boot 3.5.x, Flowable 7.x, JUnit 5, Mockito 5.x, REST Assured 5.x, Testcontainers 1.19.x, WireMock 3.x, Spring Test, Spring Boot Test (002-backend-testing)
 - PostgreSQL 15+ (multi-tenant schema strategy) via Testcontainers for integration tests (002-backend-testing)
+- Java 21, TypeScript 5+ + Spring Boot 3.5.x, Flowable 7.x, Next.js 14 (App Router), React 18+, Tailwind CSS, Lucide React (icons) (003-home-page-navigation)
+- PostgreSQL 15+ (multi-tenant, no schema changes) (003-home-page-navigation)
 
 - Java 21, TypeScript 5+ (001-flowable-platform-core)
 
@@ -45,10 +47,10 @@ Java 21, TypeScript 5+: Follow standard conventions
 - Test data: use `TestDataBuilder`, not raw constructors
 
 ## Recent Changes
+- 003-home-page-navigation: Added Java 21, TypeScript 5+ + Spring Boot 3.5.x, Flowable 7.x, Next.js 14 (App Router), React 18+, Tailwind CSS, Lucide React (icons)
 - 002-backend-testing: Added Java 21 + Spring Boot 3.5.x, Flowable 7.x, JUnit 5, Mockito 5.x, REST Assured 5.x, Testcontainers 1.19.x, WireMock 3.x, Spring Test, Spring Boot Test
 - 002-backend-testing: Added Java 21 + Spring Boot 3.5.x, Flowable 7.x, JUnit 5, Mockito 5.x, WireMock 3.x, Spring Test, Spring Boot Test
 
-- 001-flowable-platform-core: Added Java 21, TypeScript 5+
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
