@@ -1,0 +1,50 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: false
+
+# Disable mail server for tests
+spring.mail:
+  host: localhost
+  port: 25
+
+# JWT configuration for tests
+jwt:
+  secret: test-secret-key-for-jwt-token-generation-minimum-256-bits-required
+  expiration: 3600000
+
+# Logging configuration
+logging:
+  level:
+    com.flowable.platform: DEBUG
+    org.flowable: WARN
+    org.springframework.security: DEBUG
+    org.testcontainers: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# Flowable test configuration
+flowable:
+  database-schema-update: true
+  async-executor-enabled: false
+  job-executor-enabled: false
+
+# Server configuration
+server:
+  port: 0
+
+# Test tenant configuration
+test:
+  tenant:
+    id: 00000000-0000-0000-0000-000000000001
+    code: test-tenant
+    name: Test Tenant

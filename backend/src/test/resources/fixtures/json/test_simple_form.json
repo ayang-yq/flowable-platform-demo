@@ -1,0 +1,46 @@
+{
+  "formName": "Test Simple Form",
+  "formVersion": 1,
+  "processDefinitionKey": "test-simple-process",
+  "taskDefinitionKey": "test-user-task",
+  "schema": {
+    "pages": [
+      {
+        "name": "page1",
+        "elements": [
+          {
+            "type": "text",
+            "name": "firstName",
+            "title": "First Name",
+            "isRequired": true,
+            "validators": [
+              {
+                "type": "regex",
+                "text": "Only letters allowed",
+                "pattern": "^[a-zA-Z]+$"
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "name": "lastName",
+            "title": "Last Name",
+            "isRequired": true
+          },
+          {
+            "type": "text",
+            "name": "email",
+            "title": "Email Address",
+            "inputType": "email",
+            "isRequired": true
+          },
+          {
+            "type": "comment",
+            "name": "comments",
+            "title": "Comments"
+          }
+        ]
+      }
+    ]
+  }
+}
