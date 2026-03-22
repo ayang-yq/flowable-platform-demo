@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Unit tests for BusinessCalendarService.
  * Tests business day calculations excluding weekends and holidays.
  */
+@ExtendWith(MockitoExtension.class)
 @DisplayName("BusinessCalendarService Tests")
 class BusinessCalendarServiceTest {
 
@@ -105,13 +106,13 @@ class BusinessCalendarServiceTest {
         @Test
         @DisplayName("Should exclude holidays from count")
         void shouldExcludeHolidaysFromCount() {
-            // Assuming Christmas 2026 is on a Wednesday
+            // Dec 24 (Christmas Eve) and Dec 25 (Christmas) are both holidays
             LocalDate start = LocalDate.of(2026, 12, 21); // Monday
-            LocalDate end = LocalDate.of(2026, 12, 25);   // Friday (Christmas on Wed)
+            LocalDate end = LocalDate.of(2026, 12, 25);   // Friday
 
             long result = businessCalendarService.calculateBusinessDays(start, end);
 
-            assertThat(result).isEqualTo(4); // Mon-Tue, Thu-Fri (Wed excluded)
+            assertThat(result).isEqualTo(3); // Mon, Tue, Wed (Thu=Christmas Eve, Fri=Christmas excluded)
         }
 
         @Test
@@ -225,13 +226,13 @@ class BusinessCalendarServiceTest {
         @Test
         @DisplayName("Should skip holiday and weekend")
         void shouldSkipHolidayAndWeekend() {
-            // If Thursday is a holiday
-            LocalDate wednesday = LocalDate.of(2026, 12, 24);
+            // Dec 24 (Thu) is Christmas Eve holiday
+            LocalDate christmasEve = LocalDate.of(2026, 12, 24);
 
-            LocalDate result = businessCalendarService.getNextBusinessDay(wednesday);
+            LocalDate result = businessCalendarService.getNextBusinessDay(christmasEve);
 
-            // Should skip Thursday (holiday), Friday (weekend starts), Saturday, Sunday, Monday
-            assertThat(result.getDayOfWeek()).isEqualTo(DayOfWeek.TUESDAY);
+            // Should skip Dec 25 (Fri, Christmas holiday), Dec 26 (Sat), Dec 27 (Sun) → Dec 28 (Mon)
+            assertThat(result.getDayOfWeek()).isEqualTo(DayOfWeek.MONDAY);
         }
     }
 }

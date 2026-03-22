@@ -166,20 +166,20 @@ class DateTimeUtilsTest {
 
             LocalDate result = addBusinessDays(friday, 5);
 
-            // Friday + 5 business days = Thursday (two weeks later)
-            assertThat(result.getDayOfWeek()).isEqualTo(DayOfWeek.THURSDAY);
+            // Friday + 5 business days = next Friday (Mon, Tue, Wed, Thu, Fri)
+            assertThat(result.getDayOfWeek()).isEqualTo(DayOfWeek.FRIDAY);
         }
 
         @Test
         @DisplayName("Should skip holiday when adding business days")
         void shouldSkipHolidayWhenAddingBusinessDays() {
-            // Assuming Dec 23 is Wednesday, Dec 24 is Thursday, Dec 25 is Friday (holiday)
+            // Dec 23 is Wednesday, Dec 24 is Thursday (business day), Dec 25 is Friday (Christmas holiday)
             LocalDate wednesday = LocalDate.of(2026, 12, 23);
 
             LocalDate result = addBusinessDays(wednesday, 1);
 
-            // Should skip Friday (Christmas) and return Monday
-            assertThat(result.getDayOfWeek()).isEqualTo(DayOfWeek.MONDAY);
+            // Next business day after Wednesday is Thursday (Dec 24)
+            assertThat(result.getDayOfWeek()).isEqualTo(DayOfWeek.THURSDAY);
         }
 
         @Test

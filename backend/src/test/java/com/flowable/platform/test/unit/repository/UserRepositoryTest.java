@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
  * Unit tests for UserRepository methods.
  * Tests JPA query methods for user management.
  */
+@ExtendWith(MockitoExtension.class)
 @DisplayName("UserRepository Tests")
 class UserRepositoryTest {
 
