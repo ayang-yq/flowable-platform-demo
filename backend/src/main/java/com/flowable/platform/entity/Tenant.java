@@ -3,7 +3,9 @@ package com.flowable.platform.entity;
 import com.flowable.platform.config.JsonStringConverter;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -30,7 +32,8 @@ public class Tenant {
     @Column(name = "logo_url")
     private String logoUrl;
 
-    @Column(name = "settings", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "settings")
     private String settings;
 
     @Column(name = "is_active", nullable = false)
