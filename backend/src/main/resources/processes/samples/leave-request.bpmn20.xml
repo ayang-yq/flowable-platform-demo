@@ -1,59 +1,116 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="http://www.omg.org/spec/BPMN/2.0"
-             xmlns:bpmndi="http://www.omg.org/spec/BPMN/2.0/DI"
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
              xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
              xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
-             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              typeLanguage="http://www.w3.org/2001/XMLSchema"
              expressionLanguage="http://www.w3.org/1999/XPath"
-             targetNamespace="http://flowable.org/bpmn">
+             targetNamespace="http://www.flowable.org/processdef"
+             id="leave-request-process">
 
   <process id="leaveRequest" name="Leave Request Process" isExecutable="true">
-    <documentation>A simple leave approval workflow where employees submit leave requests and managers approve them.</documentation>
+    <documentation>A leave approval workflow where employees submit leave requests and managers approve or reject them.</documentation>
 
-    <startEvent id="start" name="Start"/>
-    <sequenceFlow sourceRef="start" targetRef="submitLeave"/>
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="Start"/>
 
-    <userTask id="submitLeave" name="Submit Leave Request" flowable:assignee="${employeeName}">
-      <documentation>Employee submits their leave request with dates and reason</documentation>
+    <!-- Submit Request - User Task -->
+    <userTask id="submitRequest" name="Submit Leave Request" flowable:assignee="${initiator}">
+      <documentation>Employee submits their leave request with type, dates and reason</documentation>
+      <extensionElements>
+        <flowable:formProperty id="leaveType" name="Leave Type" type="enum" required="true">
+          <flowable:value id="annual">Annual Leave</flowable:value>
+          <flowable:value id="sick">Sick Leave</flowable:value>
+          <flowable:value id="unpaid">Unpaid Leave</flowable:value>
+          <flowable:value id="maternity">Maternity Leave</flowable:value>
+        </flowable:formProperty>
+        <flowable:formProperty id="startDate" name="Start Date" type="date" required="true"/>
+        <flowable:formProperty id="endDate" name="End Date" type="date" required="true"/>
+        <flowable:formProperty id="reason" name="Reason" type="string" required="true"/>
+      </extensionElements>
     </userTask>
-    <sequenceFlow sourceRef="submitLeave" targetRef="managerApproval"/>
 
-    <userTask id="managerApproval" name="Manager Approval" flowable:candidateGroups="${managerDepartment}">
-      <documentation>Manager reviews and approves the leave request</documentation>
+    <!-- Manager Approval - User Task -->
+    <userTask id="managerApproval" name="Manager Approval" flowable:assignee="${manager}">
+      <documentation>Manager reviews and approves or rejects the leave request</documentation>
+      <extensionElements>
+        <flowable:formProperty id="decision" name="Decision" type="enum" required="true">
+          <flowable:value id="approve">Approve</flowable:value>
+          <flowable:value id="reject">Reject</flowable:value>
+        </flowable:formProperty>
+        <flowable:formProperty id="comments" name="Comments" type="string" required="false"/>
+      </extensionElements>
     </userTask>
-    <sequenceFlow sourceRef="managerApproval" targetRef="end"/>
 
-    <endEvent id="end" name="End"/>
+    <!-- Decision Gateway -->
+    <exclusiveGateway id="decisionGateway" name="Approval Decision"/>
+
+    <!-- Approved End Event -->
+    <endEvent id="approvedEnd" name="Leave Approved"/>
+
+    <!-- Rejected End Event -->
+    <endEvent id="rejectedEnd" name="Leave Rejected"/>
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="submitRequest"/>
+    <sequenceFlow id="flow2" sourceRef="submitRequest" targetRef="managerApproval"/>
+    <sequenceFlow id="flow3" sourceRef="managerApproval" targetRef="decisionGateway"/>
+    <sequenceFlow id="flow4" sourceRef="decisionGateway" targetRef="approvedEnd">
+      <conditionExpression xsi:type="tFormalExpression">
+        ${decision == 'approve'}
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow5" sourceRef="decisionGateway" targetRef="rejectedEnd">
+      <conditionExpression xsi:type="tFormalExpression">
+        ${decision == 'reject'}
+      </conditionExpression>
+    </sequenceFlow>
   </process>
 
-  <!-- BPMN Diagram -->
-  <bpmndi:BPMNDiagram id="BPMNDiagram_leaveRequest">
-    <bpmndi:BPMNPlane bpmnElement="leaveRequest" id="BPMNPlane_leaveRequest">
-      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_start">
-        <omgdc:Bounds height="30.0" width="30.0" x="100.0" y="163.0"/>
+  <!-- BPMN Diagram Information -->
+  <bpmndi:BPMNDiagram id="leave-request-diagram" name="Leave Request Process Diagram">
+    <bpmndi:BPMNPlane bpmnElement="leaveRequest">
+      <bpmndi:BPMNShape id="startEvent_shape" bpmnElement="startEvent">
+        <omgdc:Bounds x="100" y="150" width="30" height="30"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="submitLeave" id="BPMNShape_submitLeave">
-        <omgdc:Bounds height="80.0" width="100.0" x="180.0" y="138.0"/>
+      <bpmndi:BPMNShape id="submitRequest_shape" bpmnElement="submitRequest">
+        <omgdc:Bounds x="200" y="120" width="100" height="80"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="managerApproval" id="BPMNShape_managerApproval">
-        <omgdc:Bounds height="80.0" width="100.0" x="330.0" y="138.0"/>
+      <bpmndi:BPMNShape id="managerApproval_shape" bpmnElement="managerApproval">
+        <omgdc:Bounds x="370" y="120" width="100" height="80"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="end" id="BPMNShape_end">
-        <omgdc:Bounds height="28.0" width="28.0" x="480.0" y="164.0"/>
+      <bpmndi:BPMNShape id="decisionGateway_shape" bpmnElement="decisionGateway">
+        <omgdc:Bounds x="540" y="140" width="50" height="50"/>
       </bpmndi:BPMNShape>
-
-      <bpmndi:BPMNEdge bpmnElement="start_submitLeave" id="BPMNEdge_start_submitLeave">
-        <omgdi:waypoint x="129.94999999999993" y="178.0"/>
-        <omgdi:waypoint x="179.99999999999994" y="178.0"/>
+      <bpmndi:BPMNShape id="approvedEnd_shape" bpmnElement="approvedEnd">
+        <omgdc:Bounds x="680" y="90" width="30" height="30"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="rejectedEnd_shape" bpmnElement="rejectedEnd">
+        <omgdc:Bounds x="680" y="190" width="30" height="30"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow1_edge" bpmnElement="flow1">
+        <omgdi:waypoint x="130" y="165"/>
+        <omgdi:waypoint x="200" y="160"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="submitLeave_managerApproval" id="BPMNEdge_submitLeave_managerApproval">
-        <omgdi:waypoint x="279.94999999999993" y="178.0"/>
-        <omgdi:waypoint x="329.99999999999994" y="178.0"/>
+      <bpmndi:BPMNEdge id="flow2_edge" bpmnElement="flow2">
+        <omgdi:waypoint x="300" y="160"/>
+        <omgdi:waypoint x="370" y="160"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="managerApproval_end" id="BPMNEdge_managerApproval_end">
-        <omgdi:waypoint x="429.94999999999993" y="178.0"/>
-        <omgdi:waypoint x="480.0" y="178.0"/>
+      <bpmndi:BPMNEdge id="flow3_edge" bpmnElement="flow3">
+        <omgdi:waypoint x="470" y="160"/>
+        <omgdi:waypoint x="540" y="165"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow4_edge" bpmnElement="flow4">
+        <omgdi:waypoint x="565" y="140"/>
+        <omgdi:waypoint x="565" y="105"/>
+        <omgdi:waypoint x="680" y="105"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow5_edge" bpmnElement="flow5">
+        <omgdi:waypoint x="565" y="190"/>
+        <omgdi:waypoint x="565" y="205"/>
+        <omgdi:waypoint x="680" y="205"/>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.flowable.org/processdef"
+             id="document-review-process">
+
+  <process id="documentReview" name="Document Review Process" isExecutable="true">
+    <documentation>Document review and approval process with parallel reviewers</documentation>
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="Start"/>
+
+    <!-- Upload Document - User Task -->
+    <userTask id="uploadDocument" name="Upload Document" flowable:assignee="${initiator}">
+      <documentation>User uploads a document for review</documentation>
+      <extensionElements>
+        <flowable:formProperty id="documentTitle" name="Document Title" type="string" required="true"/>
+        <flowable:formProperty id="documentDescription" name="Document Description" type="string" required="true"/>
+        <flowable:formProperty id="documentCategory" name="Category" type="enum" required="true">
+          <flowable:value id="policy">Policy</flowable:value>
+          <flowable:value id="procedure">Procedure</flowable:value>
+          <flowable:value id="guide">Guide</flowable:value>
+          <flowable:value id="template">Template</flowable:value>
+          <flowable:value id="standard">Standard</flowable:value>
+        </flowable:formProperty>
+      </extensionElements>
+    </userTask>
+
+    <!-- Parallel Gateway (Split) -->
+    <parallelGateway id="parallelGatewayStart" name="Start Parallel Review"/>
+
+    <!-- Reviewer 1 - User Task -->
+    <userTask id="reviewer1Task" name="Reviewer 1 Review" flowable:assignee="${reviewer1}">
+      <documentation>First reviewer reviews the document</documentation>
+      <extensionElements>
+        <flowable:formProperty id="reviewer1Approved" name="Approved" type="enum" required="true">
+          <flowable:value id="yes">Approve</flowable:value>
+          <flowable:value id="no">Reject</flowable:value>
+        </flowable:formProperty>
+        <flowable:formProperty id="reviewer1Comments" name="Comments" type="string" required="false"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- Reviewer 2 - User Task -->
+    <userTask id="reviewer2Task" name="Reviewer 2 Review" flowable:assignee="${reviewer2}">
+      <documentation>Second reviewer reviews the document</documentation>
+      <extensionElements>
+        <flowable:formProperty id="reviewer2Approved" name="Approved" type="enum" required="true">
+          <flowable:value id="yes">Approve</flowable:value>
+          <flowable:value id="no">Reject</flowable:value>
+        </flowable:formProperty>
+        <flowable:formProperty id="reviewer2Comments" name="Comments" type="string" required="false"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- Parallel Gateway (Join) -->
+    <parallelGateway id="parallelGatewayEnd" name="Join Parallel Review"/>
+
+    <!-- Final Decision - User Task -->
+    <userTask id="finalDecision" name="Final Decision" flowable:assignee="${decisionMaker}">
+      <documentation>Make final decision based on both reviewers' feedback</documentation>
+      <extensionElements>
+        <flowable:formProperty id="finalApproval" name="Final Decision" type="enum" required="true">
+          <flowable:value id="approve">Approve Document</flowable:value>
+          <flowable:value id="reject">Reject Document</flowable:value>
+          <flowable:value id="revise">Request Revision</flowable:value>
+        </flowable:formProperty>
+        <flowable:formProperty id="finalComments" name="Comments" type="string" required="false"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- End Event -->
+    <endEvent id="endEvent" name="Process Complete"/>
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="uploadDocument"/>
+    <sequenceFlow id="flow2" sourceRef="uploadDocument" targetRef="parallelGatewayStart"/>
+
+    <!-- Parallel flows -->
+    <sequenceFlow id="flow3" sourceRef="parallelGatewayStart" targetRef="reviewer1Task"/>
+    <sequenceFlow id="flow4" sourceRef="parallelGatewayStart" targetRef="reviewer2Task"/>
+
+    <!-- Join parallel flows -->
+    <sequenceFlow id="flow5" sourceRef="reviewer1Task" targetRef="parallelGatewayEnd"/>
+    <sequenceFlow id="flow6" sourceRef="reviewer2Task" targetRef="parallelGatewayEnd"/>
+
+    <!-- Final decision -->
+    <sequenceFlow id="flow7" sourceRef="parallelGatewayEnd" targetRef="finalDecision"/>
+    <sequenceFlow id="flow8" sourceRef="finalDecision" targetRef="endEvent"/>
+  </process>
+
+  <!-- BPMN Diagram Information -->
+  <bpmndi:BPMNDiagram id="document-review-diagram" name="Document Review Process Diagram">
+    <bpmndi:BPMNPlane bpmnElement="documentReview">
+      <bpmndi:BPMNShape id="startEvent_shape" bpmnElement="startEvent">
+        <omgdc:Bounds x="50" y="185" width="30" height="30"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="uploadDocument_shape" bpmnElement="uploadDocument">
+        <omgdc:Bounds x="130" y="155" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="parallelGatewayStart_shape" bpmnElement="parallelGatewayStart">
+        <omgdc:Bounds x="310" y="175" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reviewer1Task_shape" bpmnElement="reviewer1Task">
+        <omgdc:Bounds x="420" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reviewer2Task_shape" bpmnElement="reviewer2Task">
+        <omgdc:Bounds x="420" y="250" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="parallelGatewayEnd_shape" bpmnElement="parallelGatewayEnd">
+        <omgdc:Bounds x="600" y="175" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="finalDecision_shape" bpmnElement="finalDecision">
+        <omgdc:Bounds x="720" y="155" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="endEvent_shape" bpmnElement="endEvent">
+        <omgdc:Bounds x="900" y="185" width="30" height="30"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Sequence Flow Edges -->
+      <bpmndi:BPMNEdge id="flow1_edge" bpmnElement="flow1">
+        <omgdi:waypoint x="80" y="200"/>
+        <omgdi:waypoint x="130" y="195"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow2_edge" bpmnElement="flow2">
+        <omgdi:waypoint x="230" y="195"/>
+        <omgdi:waypoint x="310" y="200"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow3_edge" bpmnElement="flow3">
+        <omgdi:waypoint x="335" y="175"/>
+        <omgdi:waypoint x="335" y="120"/>
+        <omgdi:waypoint x="420" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow4_edge" bpmnElement="flow4">
+        <omgdi:waypoint x="335" y="225"/>
+        <omgdi:waypoint x="335" y="290"/>
+        <omgdi:waypoint x="420" y="290"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow5_edge" bpmnElement="flow5">
+        <omgdi:waypoint x="520" y="120"/>
+        <omgdi:waypoint x="625" y="175"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow6_edge" bpmnElement="flow6">
+        <omgdi:waypoint x="520" y="290"/>
+        <omgdi:waypoint x="625" y="225"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow7_edge" bpmnElement="flow7">
+        <omgdi:waypoint x="650" y="200"/>
+        <omgdi:waypoint x="720" y="195"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow8_edge" bpmnElement="flow8">
+        <omgdi:waypoint x="820" y="195"/>
+        <omgdi:waypoint x="900" y="200"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

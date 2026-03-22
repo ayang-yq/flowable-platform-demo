@@ -85,11 +85,50 @@ docker-compose up postgres
 - ✅ **Analytics dashboards** (ECharts)
 - ✅ **Audit logging** with append-only enforcement
 
+## Testing
+
+### Backend Tests
+```bash
+cd backend
+mvn test                                  # Unit tests only
+mvn verify                                # Unit + integration tests
+mvn verify jacoco:report                  # Tests + coverage report
+```
+
+### Frontend Tests
+```bash
+cd frontend
+npm test                                  # Run all tests
+npm run lint                              # Lint check
+```
+
 ## Architecture
 
 - **Backend**: Spring Boot 3.5.x + Flowable 7.x + PostgreSQL 15+
 - **Frontend**: Next.js 14+ (App Router) + React 18+ + Tailwind CSS + Shadcn/UI
 - **Testing**: JUnit 5, Testcontainers, Jest, React Testing Library
+
+## Deployment
+
+### Production Deployment
+
+1. **Database**: PostgreSQL 15+ with `uuid-ossp` extension. Flyway migrations run automatically on startup.
+2. **Backend**: Build with `mvn package -DskipTests` → deploy `target/flowable-platform-demo-*.jar`
+3. **Frontend**: Build with `npm run build` → deploy to CDN or reverse proxy
+4. **Environment Variables**: See `.env.example` for all required variables
+
+### Docker Production Build
+```bash
+docker-compose -f docker-compose.yml up -d --build
+```
+
+### Monitoring
+- **Health**: `GET /actuator/health`
+- **Metrics**: `GET /actuator/prometheus` (Prometheus format)
+- **Grafana**: Import dashboard from `backend/src/main/resources/grafana-dashboards/`
+
+### Backup
+PostgreSQL backups should be configured via `pg_dump` cron job or managed database provider snapshots.
 
 ## License
 

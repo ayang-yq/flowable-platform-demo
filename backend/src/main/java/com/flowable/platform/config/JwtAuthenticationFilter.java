@@ -39,6 +39,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                    // Set tenant context from JWT if not already set by header
+                    if (MultiTenantFilter.getCurrentTenantId() == null) {
+                        String tenantId = jwtTokenService.extractTenantId(token);
+                        if (tenantId != null) {
+                            MultiTenantFilter.setTenantId(tenantId);
+                        }
+                    }
                 }
             }
         }

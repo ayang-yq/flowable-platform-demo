@@ -1,44 +1,187 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="http://www.omg.org/spec/BPMN/2.0"
-             xmlns:bpmndi="http://www.omg.org/spec/BPMN/2.0/DI"
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
              xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
              xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
-             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              typeLanguage="http://www.w3.org/2001/XMLSchema"
              expressionLanguage="http://www.w3.org/1999/XPath"
-             targetNamespace="http://flowable.org/bpmn">
+             targetNamespace="http://www.flowable.org/processdef"
+             id="expense-reimbursement-process">
 
-  <process id="expenseReport" name="Expense Report Process" isExecutable="true">
-    <documentation>Process for submitting and approving expense reports</documentation>
+  <process id="expenseReimbursement" name="Expense Reimbursement Process" isExecutable="true">
+    <documentation>Expense claim process with amount-based approval routing</documentation>
 
-    <startEvent id="start" name="Start"/>
-    <sequenceFlow sourceRef="start" targetRef="submitExpense"/>
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="Start"/>
 
-    <userTask id="submitExpense" name="Submit Expense Report" flowable:assignee="${employee}">
-      <documentation>Employee submits expense report with details and receipt</documentation>
+    <!-- Submit Expense - User Task -->
+    <userTask id="submitExpense" name="Submit Expense" flowable:assignee="${employee}">
+      <documentation>Employee submits expense claim with amount, category and description</documentation>
+      <extensionElements>
+        <flowable:formProperty id="amount" name="Amount" type="string" required="true"/>
+        <flowable:formProperty id="category" name="Category" type="enum" required="true">
+          <flowable:value id="travel">Travel</flowable:value>
+          <flowable:value id="meals">Meals</flowable:value>
+          <flowable:value id="accommodation">Accommodation</flowable:value>
+          <flowable:value id="supplies">Office Supplies</flowable:value>
+          <flowable:value id="equipment">Equipment</flowable:value>
+          <flowable:value id="other">Other</flowable:value>
+        </flowable:formProperty>
+        <flowable:formProperty id="description" name="Description" type="string" required="true"/>
+      </extensionElements>
     </userTask>
-    <sequenceFlow sourceRef="submitExpense" targetRef="managerReview"/>
 
-    <userTask id="managerReview" name="Manager Review" flowable:candidateGroups="managers">
-      <documentation>Manager reviews the expense report</documentation>
+    <!-- Amount Check Gateway -->
+    <exclusiveGateway id="amountCheckGateway" name="Amount Check"/>
+
+    <!-- Manager Approval - for amounts <= 5000 -->
+    <userTask id="managerApproval" name="Manager Approval" flowable:assignee="${manager}">
+      <documentation>Manager approves or rejects the expense claim</documentation>
+      <extensionElements>
+        <flowable:formProperty id="approved" name="Approved" type="enum" required="true">
+          <flowable:value id="yes">Approve</flowable:value>
+          <flowable:value id="no">Reject</flowable:value>
+        </flowable:formProperty>
+        <flowable:formProperty id="approverComments" name="Comments" type="string" required="false"/>
+      </extensionElements>
     </userTask>
-    <sequenceFlow sourceRef="managerReview" targetRef="gateway1"/>
 
-    <exclusiveGateway id="gateway1" name="Approval Decision"/>
-    <sequenceFlow sourceRef="gateway1" targetRef="financeApproval" name="Approved">
-      <conditionExpression xsi:type="tFormalExpression">${approved == true}</conditionExpression>
+    <!-- Director Approval - for amounts > 5000 -->
+    <userTask id="directorApproval" name="Director Approval" flowable:assignee="${director}">
+      <documentation>Director approves high-value expense claims</documentation>
+      <extensionElements>
+        <flowable:formProperty id="approved" name="Approved" type="enum" required="true">
+          <flowable:value id="yes">Approve</flowable:value>
+          <flowable:value id="no">Reject</flowable:value>
+        </flowable:formProperty>
+        <flowable:formProperty id="approverComments" name="Comments" type="string" required="false"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- Approval/Rejection Decision Gateway -->
+    <exclusiveGateway id="approvalGateway" name="Approval Decision"/>
+
+    <!-- Finance Processing - Service Task Placeholder -->
+    <serviceTask id="financeProcessing" name="Finance Processing" flowable:class="com.flowable.platform.delegate.FinanceProcessingDelegate">
+      <documentation>Placeholder for finance processing service task</documentation>
+    </serviceTask>
+
+    <!-- End Events -->
+    <endEvent id="approvedEnd" name="Reimbursement Approved"/>
+    <endEvent id="rejectedEnd" name="Claim Rejected"/>
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="submitExpense"/>
+    <sequenceFlow id="flow2" sourceRef="submitExpense" targetRef="amountCheckGateway"/>
+
+    <!-- Amount-based routing -->
+    <sequenceFlow id="flow3" sourceRef="amountCheckGateway" targetRef="managerApproval">
+      <conditionExpression xsi:type="tFormalExpression">
+        ${amount &lt;= 5000}
+      </conditionExpression>
     </sequenceFlow>
-    <sequenceFlow sourceRef="gateway1" targetRef="rejectEnd" name="Rejected">
-      <conditionExpression xsi:type="tFormalExpression">${approved == false}</conditionExpression>
+    <sequenceFlow id="flow4" sourceRef="amountCheckGateway" targetRef="directorApproval">
+      <conditionExpression xsi:type="tFormalExpression">
+        ${amount > 5000}
+      </conditionExpression>
     </sequenceFlow>
 
-    <userTask id="financeApproval" name="Finance Approval" flowable:candidateGroups="finance">
-      <documentation>Finance team processes the approved expense</documentation>
-    </userTask>
-    <sequenceFlow sourceRef="financeApproval" targetRef="end"/>
+    <!-- Manager approval to decision gateway -->
+    <sequenceFlow id="flow5" sourceRef="managerApproval" targetRef="approvalGateway"/>
 
-    <endEvent id="end" name="Approved"/>
-    <endEvent id="rejectEnd" name="Rejected"/>
+    <!-- Director approval to decision gateway -->
+    <sequenceFlow id="flow6" sourceRef="directorApproval" targetRef="approvalGateway"/>
+
+    <!-- Approval/Rejection decisions -->
+    <sequenceFlow id="flow7" sourceRef="approvalGateway" targetRef="financeProcessing">
+      <conditionExpression xsi:type="tFormalExpression">
+        ${approved == 'yes'}
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow8" sourceRef="approvalGateway" targetRef="rejectedEnd">
+      <conditionExpression xsi:type="tFormalExpression">
+        ${approved == 'no'}
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- Finance processing to approved end -->
+    <sequenceFlow id="flow9" sourceRef="financeProcessing" targetRef="approvedEnd"/>
   </process>
+
+  <!-- BPMN Diagram Information -->
+  <bpmndi:BPMNDiagram id="expense-reimbursement-diagram" name="Expense Reimbursement Process Diagram">
+    <bpmndi:BPMNPlane bpmnElement="expenseReimbursement">
+      <bpmndi:BPMNShape id="startEvent_shape" bpmnElement="startEvent">
+        <omgdc:Bounds x="50" y="200" width="30" height="30"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="submitExpense_shape" bpmnElement="submitExpense">
+        <omgdc:Bounds x="130" y="170" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="amountCheckGateway_shape" bpmnElement="amountCheckGateway">
+        <omgdc:Bounds x="310" y="190" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="managerApproval_shape" bpmnElement="managerApproval">
+        <omgdc:Bounds x="430" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="directorApproval_shape" bpmnElement="directorApproval">
+        <omgdc:Bounds x="430" y="250" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="approvalGateway_shape" bpmnElement="approvalGateway">
+        <omgdc:Bounds x="610" y="190" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="financeProcessing_shape" bpmnElement="financeProcessing">
+        <omgdc:Bounds x="730" y="170" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="approvedEnd_shape" bpmnElement="approvedEnd">
+        <omgdc:Bounds x="900" y="185" width="30" height="30"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="rejectedEnd_shape" bpmnElement="rejectedEnd">
+        <omgdc:Bounds x="900" y="280" width="30" height="30"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Sequence Flow Edges -->
+      <bpmndi:BPMNEdge id="flow1_edge" bpmnElement="flow1">
+        <omgdi:waypoint x="80" y="215"/>
+        <omgdi:waypoint x="130" y="210"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow2_edge" bpmnElement="flow2">
+        <omgdi:waypoint x="230" y="210"/>
+        <omgdi:waypoint x="310" y="215"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow3_edge" bpmnElement="flow3">
+        <omgdi:waypoint x="335" y="190"/>
+        <omgdi:waypoint x="335" y="120"/>
+        <omgdi:waypoint x="430" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow4_edge" bpmnElement="flow4">
+        <omgdi:waypoint x="335" y="240"/>
+        <omgdi:waypoint x="335" y="290"/>
+        <omgdi:waypoint x="430" y="290"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow5_edge" bpmnElement="flow5">
+        <omgdi:waypoint x="530" y="120"/>
+        <omgdi:waypoint x="635" y="190"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow6_edge" bpmnElement="flow6">
+        <omgdi:waypoint x="530" y="290"/>
+        <omgdi:waypoint x="635" y="240"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow7_edge" bpmnElement="flow7">
+        <omgdi:waypoint x="660" y="215"/>
+        <omgdi:waypoint x="730" y="215"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow8_edge" bpmnElement="flow8">
+        <omgdi:waypoint x="635" y="240"/>
+        <omgdi:waypoint x="635" y="295"/>
+        <omgdi:waypoint x="900" y="295"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow9_edge" bpmnElement="flow9">
+        <omgdi:waypoint x="830" y="210"/>
+        <omgdi:waypoint x="900" y="200"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 
 </definitions>
