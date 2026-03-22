@@ -119,33 +119,33 @@
 
 ### Integration Tests for User Story 2
 
-- [ ] T057 [P] [US2] Create TaskServiceIntegrationTest in backend/src/test/integration/TaskServiceIntegrationTest.java for task querying and completion
-- [ ] T058 [P] [US2] Create TaskControllerTest in backend/src/test/unit/TaskControllerTest.java for task REST API endpoints
-- [ ] T059 [P] [US2] Create MultiTenantTaskTest in backend/src/test/integration/MultiTenantTaskTest.java for task tenant isolation
-- [ ] T059a [P] [US2] Create BusinessCalendarTest in backend/src/test/unit/BusinessCalendarTest.java for business day calculation and holiday exclusion
+- [X] T057 [P] [US2] Create TaskServiceIntegrationTest in backend/src/test/integration/TaskServiceIntegrationTest.java for task querying and completion
+- [X] T058 [P] [US2] Create TaskControllerTest in backend/src/test/unit/TaskControllerTest.java for task REST API endpoints
+- [X] T059 [P] [US2] Create MultiTenantTaskTest in backend/src/test/integration/MultiTenantTaskTest.java for task tenant isolation
+- [X] T059a [P] [US2] Create BusinessCalendarTest in backend/src/test/unit/BusinessCalendarTest.java for business day calculation and holiday exclusion
 
 ### Implementation for User Story 2
 
-- [ ] T060 [P] [US2] Create TaskService in backend/src/main/java/com/flowable/platform/service/TaskService.java using Flowable TaskService directly
-- [ ] T061 [US2] Create TaskController in backend/src/main/java/com/flowable/platform/controller/TaskController.java with endpoints for my-tasks, completed, my-requests
-- [ ] T062 [US2] Implement task claim endpoint in TaskController.java
-- [ ] T063 [US2] Implement task complete endpoint with form data in TaskController.java
-- [ ] T064 [US2] Implement task delegate endpoint in TaskController.java
-- [ ] T065 [US2] Implement task reassignment endpoint (admin only) in TaskController.java
-- [ ] T066 [P] [US2] Create MyTasks page (Server Component) in frontend/src/app/tasks/page.tsx
-- [ ] T067 [P] [US2] Create TaskCard component (Client Component) in frontend/src/app/tasks/components/TaskCard.tsx
-- [ ] T068 [P] [US2] Create CompletedTasks page (Server Component) in frontend/src/app/tasks/completed/page.tsx
-- [ ] T069 [P] [US2] Create MyRequests page (Server Component) in frontend/src/app/tasks/requests/page.tsx
-- [ ] T070 [US2] Create AllTasks page (admin only) in frontend/src/app/tasks/all/page.tsx
-- [ ] T071 [US2] Implement task filtering by department, priority, due date in TaskController.java
-- [ ] T072 [US2] Implement task expiration alerts with SLA tracking in TaskService.java
-- [ ] T072a [US2] Create BusinessCalendarService in backend/src/main/java/com/flowable/platform/service/BusinessCalendarService.java to calculate business days excluding weekends and tenant-specific holidays
-- [ ] T072b [US2] Integrate business calendar with task due date calculation and SLA evaluation in backend/src/main/java/com/flowable/platform/service/TaskService.java
-- [ ] T073 [US2] Add visual highlighting for overdue tasks in TaskCard.tsx
-- [ ] T074 [US2] Add audit logging for all task operations (claim, complete, delegate) in TaskService.java
-- [ ] T074a [US2] Implement task CC (carbon copy) feature in backend/src/main/java/com/flowable/platform/service/TaskService.java to copy users on tasks without assigning approval responsibility
-- [ ] T074b [US2] Add CC users endpoint in backend/src/main/java/com/flowable/platform/controller/TaskController.java to add/remove CC users from tasks
-- [ ] T074c [P] [US2] Include CC users in task list API response in backend/src/main/java/com/flowable/platform/dto/TaskDTO.java and display in TaskCard.tsx
+- [X] T060 [P] [US2] Create TaskManagementService in backend/src/main/java/com/flowable/platform/service/TaskManagementService.java using Flowable TaskService directly
+- [X] T061 [US2] Create TaskController in backend/src/main/java/com/flowable/platform/controller/TaskController.java with endpoints for my-tasks, completed, my-requests
+- [X] T062 [US2] Implement task claim endpoint in TaskController.java
+- [X] T063 [US2] Implement task complete endpoint with form data in TaskController.java
+- [X] T064 [US2] Implement task delegate endpoint in TaskController.java
+- [X] T065 [US2] Implement task reassignment endpoint (admin only) in TaskController.java
+- [X] T066 [P] [US2] Create MyTasks page (Server Component) in frontend/src/app/tasks/page.tsx
+- [X] T067 [P] [US2] Create TaskCard component (Client Component) in frontend/src/components/tasks/TaskCard.tsx
+- [X] T068 [P] [US2] Create CompletedTasks page (Server Component) in frontend/src/app/tasks/completed/page.tsx
+- [X] T069 [P] [US2] Create MyRequests page (Server Component) in frontend/src/app/tasks/requests/page.tsx
+- [X] T070 [US2] Create AllTasks page (admin only) in frontend/src/app/tasks/all/page.tsx
+- [X] T071 [US2] Implement task filtering by department, priority, due date in TaskController.java
+- [X] T072 [US2] Implement task expiration alerts with SLA tracking in TaskManagementService.java
+- [X] T072a [US2] Create BusinessCalendarService in backend/src/main/java/com/flowable/platform/service/BusinessCalendarService.java to calculate business days excluding weekends and tenant-specific holidays
+- [X] T072b [US2] Integrate business calendar with task due date calculation and SLA evaluation in backend/src/main/java/com/flowable/platform/service/TaskManagementService.java
+- [X] T073 [US2] Add visual highlighting for overdue tasks in TaskCard.tsx
+- [X] T074 [US2] Add audit logging for all task operations (claim, complete, delegate) in TaskManagementService.java
+- [X] T074a [US2] Implement task CC (carbon copy) feature in backend/src/main/java/com/flowable/platform/service/TaskManagementService.java to copy users on tasks without assigning approval responsibility
+- [X] T074b [US2] Add CC users endpoint in backend/src/main/java/com/flowable/platform/controller/TaskController.java to add/remove CC users from tasks
+- [X] T074c [P] [US2] Include CC users in task list API response in backend/src/main/java/com/flowable/platform/dto/TaskDTO.java and display in TaskCard.tsx
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently - users can execute processes and manage their tasks
 
@@ -159,31 +159,31 @@
 
 ### Integration Tests for User Story 3
 
-- [ ] T075 [P] [US3] Create FormSchemaIntegrationTest in backend/src/test/integration/FormSchemaIntegrationTest.java for form versioning and process variable mapping
-- [ ] T076 [P] [US3] Create FormControllerTest in backend/src/test/unit/FormControllerTest.java for form REST API endpoints
-- [ ] T077 [P] [US3] Create SurveyJSFormTest in frontend/src/test/components/SurveyJSFormTest.test.tsx for form rendering and validation
+- [X] T075 [P] [US3] Create FormSchemaIntegrationTest in backend/src/test/integration/FormSchemaIntegrationTest.java for form versioning and process variable mapping
+- [X] T076 [P] [US3] Create FormControllerTest in backend/src/test/unit/FormControllerTest.java for form REST API endpoints
+- [X] T077 [P] [US3] Create SurveyJSFormTest in frontend/src/test/components/SurveyJSFormTest.test.tsx for form rendering and validation
 
 ### Implementation for User Story 3
 
-- [ ] T078 [P] [US3] Create FormSchema entity in backend/src/main/java/com/flowable/platform/entity/FormSchema.java
-- [ ] T079 [P] [US3] Create FormSchemaRepository in backend/src/main/java/com/flowable/platform/repository/FormSchemaRepository.java
-- [ ] T080 [US3] Create FormService in backend/src/main/java/com/flowable/platform/service/FormService.java
-- [ ] T081 [US3] Create FormController in backend/src/main/java/com/flowable/platform/controller/FormController.java with CRUD endpoints
-- [ ] T082 [US3] Implement form version management (create new version on update) in FormService.java
-- [ ] T083 [US3] Implement form-to-process-variable mapping in FormService.java with JSON serialization
-- [ ] T084 [US3] Implement server-side form validation in FormService.java
-- [ ] T085 [US3] Implement field-level permissions enforcement in FormService.java (read-only, required, hidden based on node and roles)
-- [ ] T086 [P] [US3] Create SurveyJS form renderer component (Client Component) in frontend/src/components/forms/SurveyFormRenderer.tsx
-- [ ] T087 [P] [US3] Create Server Component wrapper in frontend/src/components/forms/SurveyForm.tsx
-- [ ] T088 [P] [US3] Create form builder page (Server Component) in frontend/src/app/forms/builder/page.tsx
-- [ ] T089 [US3] Implement visual form builder with drag-and-drop field palette in frontend/src/app/forms/builder/components/FormBuilder.tsx (Client Component)
-- [ ] T090 [US3] Implement form field types (text, number, date, select, radio, checkbox, file, textarea) in FormBuilder.tsx
-- [ ] T091 [US3] Implement form field validation rule configuration in FormBuilder.tsx
-- [ ] T092 [US3] Implement form preview mode in FormBuilder.tsx
-- [ ] T093 [US3] Create form version history page in frontend/src/app/forms/[id]/versions/page.tsx
-- [ ] T094 [US3] Implement historical form rendering (fetch form version from process instance) in SurveyForm.tsx
-- [ ] T095 [US3] Add form schema validation (max 10KB per variable) in FormService.java
-- [ ] T096 [US3] Add audit logging for form operations (create, update, submit) in FormService.java
+- [X] T078 [P] [US3] Create FormSchema entity in backend/src/main/java/com/flowable/platform/entity/FormSchema.java
+- [X] T079 [P] [US3] Create FormSchemaRepository in backend/src/main/java/com/flowable/platform/repository/FormSchemaRepository.java
+- [X] T080 [US3] Create FormService in backend/src/main/java/com/flowable/platform/service/FormService.java
+- [X] T081 [US3] Create FormController in backend/src/main/java/com/flowable/platform/controller/FormController.java with CRUD endpoints
+- [X] T082 [US3] Implement form version management (create new version on update) in FormService.java
+- [X] T083 [US3] Implement form-to-process-variable mapping in FormService.java with JSON serialization
+- [X] T084 [US3] Implement server-side form validation in FormService.java
+- [X] T085 [US3] Implement field-level permissions enforcement in FormService.java (read-only, required, hidden based on node and roles)
+- [X] T086 [P] [US3] Create SurveyJS form renderer component (Client Component) in frontend/src/components/forms/SurveyFormRenderer.tsx
+- [X] T087 [P] [US3] Create Server Component wrapper in frontend/src/components/forms/SurveyForm.tsx
+- [X] T088 [P] [US3] Create form builder page (Server Component) in frontend/src/app/forms/builder/page.tsx
+- [X] T089 [US3] Implement visual form builder with drag-and-drop field palette in frontend/src/app/forms/builder/components/FormBuilder.tsx (Client Component)
+- [X] T090 [US3] Implement form field types (text, number, date, select, radio, checkbox, file, textarea) in FormBuilder.tsx
+- [X] T091 [US3] Implement form field validation rule configuration in FormBuilder.tsx
+- [X] T092 [US3] Implement form preview mode in FormBuilder.tsx
+- [X] T093 [US3] Create form version history page in frontend/src/app/forms/[id]/versions/page.tsx
+- [X] T094 [US3] Implement historical form rendering (fetch form version from process instance) in SurveyForm.tsx
+- [X] T095 [US3] Add form schema validation (max 10KB per variable) in FormService.java
+- [X] T096 [US3] Add audit logging for form operations (create, update, submit) in FormService.java
 
 **Checkpoint**: All user stories (P1 priorities: US1, US2, US3) should now be independently functional - MVP is complete!
 

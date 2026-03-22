@@ -1,5 +1,6 @@
 package com.flowable.platform.entity;
 
+import com.flowable.platform.config.JsonStringConverter;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -29,7 +30,7 @@ public class Tenant {
     @Column(name = "logo_url")
     private String logoUrl;
 
-    @Column(name = "settings", columnDefinition = "JSONB")
+    @Column(name = "settings", columnDefinition = "TEXT")
     private String settings;
 
     @Column(name = "is_active", nullable = false)
@@ -55,11 +56,15 @@ public class Tenant {
 
     // Constructors
     public Tenant() {
+        this.settings = "{}"; // Initialize with empty JSON object
+        this.isActive = true;
     }
 
     public Tenant(String name, String code) {
         this.name = name;
         this.code = code;
+        this.settings = "{}"; // Initialize with empty JSON object
+        this.isActive = true;
     }
 
     // Getters and Setters

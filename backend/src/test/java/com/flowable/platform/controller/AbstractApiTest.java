@@ -4,12 +4,11 @@ import com.flowable.platform.dto.LoginRequest;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import static io.restassured.config.JsonConfig.jsonConfig;
@@ -17,10 +16,17 @@ import static io.restassured.path.json.config.JsonPathConfig.NumberReturnType.BI
 import static org.hamcrest.Matchers.notNullValue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
 public abstract class AbstractApiTest {
 
-    static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
+    static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+            .withDatabaseName("flowable_platform")
+            .withUsername("flowable")
+            .withPassword("flowable")
+            .withReuse(true);
+
+    static {
+        postgres.start();
+    }
 
     @LocalServerPort
     protected int port;
@@ -28,23 +34,17 @@ public abstract class AbstractApiTest {
     protected String adminToken;
     protected String userToken;
 
-    @BeforeAll
-    static void startContainer() {
-        postgres.start();
-        System.setProperty("spring.datasource.url", postgres.getJdbcUrl());
-        System.setProperty("spring.datasource.username", postgres.getUsername());
-        System.setProperty("spring.datasource.password", postgres.getPassword());
-    }
-
-    @AfterAll
-    static void stopContainer() {
-        if (postgres != null && postgres.isRunning()) {
-            postgres.stop();
-        }
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        registry.add("spring.flyway.enabled", () -> "false");
     }
 
     @BeforeEach
-    void loginAndGetTokens() {
+    void setUp() {
         RestAssured.config = RestAssured.config().jsonConfig(jsonConfig().numberReturnType(BIG_DECIMAL));
         RestAssured.port = port;
         RestAssured.basePath = "";
