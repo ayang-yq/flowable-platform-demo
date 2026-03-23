@@ -1,5 +1,6 @@
 import {
   Home,
+  Briefcase,
   CheckSquare,
   GitBranch,
   FileText,
@@ -17,6 +18,7 @@ export interface NavigationItem {
 
 export const navigationItems: NavigationItem[] = [
   { label: 'Home', path: '/home', icon: Home },
+  { label: 'Workspace', path: '/workspace', icon: Briefcase },
   { label: 'Tasks', path: '/tasks', icon: CheckSquare },
   { label: 'Processes', path: '/processes', icon: GitBranch },
   { label: 'Forms', path: '/forms/builder', icon: FileText },
