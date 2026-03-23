@@ -139,14 +139,56 @@ public class ProcessController {
     @GetMapping("/definitions")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> listProcessDefinitions() {
         String tenantId = MultiTenantFilter.getCurrentTenantId();
+        System.out.println("=== DEBUG listProcessDefinitions ===");
+        System.out.println("Current tenantId: " + tenantId);
 
-        List<org.flowable.engine.repository.ProcessDefinition> definitions =
+        // Get both tenant-specific AND global (empty tenant) process definitions
+        // Global processes are auto-deployed from classpath and available to all tenants
+        List<org.flowable.engine.repository.ProcessDefinition> tenantDefinitions =
                 repositoryService.createProcessDefinitionQuery()
                         .processDefinitionTenantId(tenantId)
                         .latestVersion()
                         .list();
 
-        List<Map<String, Object>> result = definitions.stream()
+        System.out.println("Tenant-specific BPMN definitions: " + tenantDefinitions.size());
+        tenantDefinitions.forEach(def -> System.out.println("  - " + def.getKey() + " (tenant=" + def.getTenantId() + ")"));
+
+        List<org.flowable.engine.repository.ProcessDefinition> globalDefinitions =
+                repositoryService.createProcessDefinitionQuery()
+                        .processDefinitionTenantId("")  // Empty string = global processes
+                        .latestVersion()
+                        .list();
+
+        System.out.println("Global BPMN definitions (query with empty string): " + globalDefinitions.size());
+        globalDefinitions.forEach(def -> System.out.println("  - " + def.getKey() + " (tenant=" + def.getTenantId() + ")"));
+
+        // Try without tenant filter to see ALL processes
+        List<org.flowable.engine.repository.ProcessDefinition> allDefinitionsNoFilter =
+                repositoryService.createProcessDefinitionQuery()
+                        .latestVersion()
+                        .list();
+
+        System.out.println("ALL BPMN definitions (no tenant filter): " + allDefinitionsNoFilter.size());
+        allDefinitionsNoFilter.forEach(def -> System.out.println("  - " + def.getKey() + " (tenant=" + def.getTenantId() + ")"));
+
+        // TEMPORARY: Use all definitions to debug
+        // TODO: Fix query to properly handle empty tenant
+        List<org.flowable.engine.repository.ProcessDefinition> allDefinitions = allDefinitionsNoFilter;
+
+        /*
+        // Merge both lists, removing duplicates (in case a process exists in both)
+        List<org.flowable.engine.repository.ProcessDefinition> allDefinitions = new java.util.ArrayList<>(tenantDefinitions);
+        for (org.flowable.engine.repository.ProcessDefinition globalDef : globalDefinitions) {
+            // Only add global definition if not already present in tenant-specific list
+            boolean exists = tenantDefinitions.stream()
+                    .anyMatch(def -> def.getKey().equals(globalDef.getKey()));
+            if (!exists) {
+                allDefinitions.add(globalDef);
+            }
+        }
+        */
+
+        List<Map<String, Object>> result = allDefinitions.stream()
                 .map(def -> {
                     Map<String, Object> defMap = new HashMap<>();
                     defMap.put("id", def.getId());

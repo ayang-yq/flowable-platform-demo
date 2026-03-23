@@ -44,11 +44,47 @@ public class ProcessService {
         // Get tenant context
         String tenantId = MultiTenantFilter.getCurrentTenantId();
 
-        // Start process instance
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(
-                processDefinitionKey,
-                variables
-        );
+        // Find process definition (check tenant-specific first, then global)
+        org.flowable.engine.repository.ProcessDefinition definition = null;
+
+        if (tenantId != null) {
+            // Try tenant-specific first
+            definition = repositoryService.createProcessDefinitionQuery()
+                    .processDefinitionKey(processDefinitionKey)
+                    .processDefinitionTenantId(tenantId)
+                    .latestVersion()
+                    .singleResult();
+        }
+
+        // Fall back to global (empty tenant) if not found
+        if (definition == null) {
+            definition = repositoryService.createProcessDefinitionQuery()
+                    .processDefinitionKey(processDefinitionKey)
+                    .processDefinitionTenantId("")
+                    .latestVersion()
+                    .singleResult();
+        }
+
+        if (definition == null) {
+            throw new IllegalArgumentException("Process definition not found: " + processDefinitionKey);
+        }
+
+        // Start process instance with appropriate tenant context
+        ProcessInstance processInstance;
+        if (tenantId != null && !"".equals(definition.getTenantId())) {
+            // Tenant-specific process
+            processInstance = runtimeService.createProcessInstanceBuilder()
+                    .processDefinitionId(definition.getId())
+                    .variables(variables != null ? variables : Collections.emptyMap())
+                    .tenantId(tenantId)
+                    .start();
+        } else {
+            // Global process - use the process definition's tenant (empty) or current tenant
+            processInstance = runtimeService.createProcessInstanceBuilder()
+                    .processDefinitionId(definition.getId())
+                    .variables(variables != null ? variables : Collections.emptyMap())
+                    .start();
+        }
 
         // Log audit
         auditService.logAction("PROCESS_STARTED", "PROCESS_INSTANCE", processInstance.getId(), null);

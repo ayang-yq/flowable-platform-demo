@@ -42,14 +42,37 @@ public class CaseService {
     public List<DefinitionDTO> listCaseDefinitions() {
         String tenantId = MultiTenantFilter.getCurrentTenantId();
 
-        var query = cmmnRepositoryService.createCaseDefinitionQuery().latestVersion();
+        // Get both tenant-specific AND global (null tenant) case definitions
+        // Global definitions are auto-deployed from classpath and available to all tenants
+        List<CaseDefinition> allDefinitions = new ArrayList<>();
+
+        // Add tenant-specific definitions
         if (tenantId != null) {
-            query.caseDefinitionTenantId(tenantId);
+            List<CaseDefinition> tenantDefinitions = cmmnRepositoryService
+                    .createCaseDefinitionQuery()
+                    .latestVersion()
+                    .caseDefinitionTenantId(tenantId)
+                    .list();
+            allDefinitions.addAll(tenantDefinitions);
         }
 
-        List<CaseDefinition> definitions = query.list();
+        // Add global (auto-deployed) definitions
+        List<CaseDefinition> globalDefinitions = cmmnRepositoryService
+                .createCaseDefinitionQuery()
+                .latestVersion()
+                .caseDefinitionTenantId("")  // Empty string = global definitions
+                .list();
 
-        return definitions.stream()
+        // Merge, avoiding duplicates by key
+        for (CaseDefinition globalDef : globalDefinitions) {
+            boolean exists = allDefinitions.stream()
+                    .anyMatch(def -> def.getKey().equals(globalDef.getKey()));
+            if (!exists) {
+                allDefinitions.add(globalDef);
+            }
+        }
+
+        return allDefinitions.stream()
                 .map(this::toDefinitionDTO)
                 .collect(Collectors.toList());
     }
@@ -58,29 +81,45 @@ public class CaseService {
     public InstanceDTO startCaseInstance(String caseDefinitionKey, Map<String, Object> variables, String businessKey) {
         String tenantId = MultiTenantFilter.getCurrentTenantId();
 
-        // Verify definition exists for tenant
-        var defQuery = cmmnRepositoryService.createCaseDefinitionQuery()
-                .caseDefinitionKey(caseDefinitionKey)
-                .latestVersion();
+        // Find case definition (check tenant-specific first, then global)
+        CaseDefinition definition = null;
+
         if (tenantId != null) {
-            defQuery.caseDefinitionTenantId(tenantId);
+            // Try tenant-specific first
+            definition = cmmnRepositoryService.createCaseDefinitionQuery()
+                    .caseDefinitionKey(caseDefinitionKey)
+                    .caseDefinitionTenantId(tenantId)
+                    .latestVersion()
+                    .singleResult();
         }
-        CaseDefinition definition = defQuery.singleResult();
+
+        // Fall back to global (empty tenant) if not found
+        if (definition == null) {
+            definition = cmmnRepositoryService.createCaseDefinitionQuery()
+                    .caseDefinitionKey(caseDefinitionKey)
+                    .caseDefinitionTenantId("")
+                    .latestVersion()
+                    .singleResult();
+        }
+
         if (definition == null) {
             throw new IllegalArgumentException("Case definition not found: " + caseDefinitionKey);
         }
 
+        // Start case instance with appropriate tenant context
         CaseInstance caseInstance;
-        if (tenantId != null) {
+        if (tenantId != null && !"".equals(definition.getTenantId())) {
+            // Tenant-specific case
             caseInstance = cmmnRuntimeService.createCaseInstanceBuilder()
-                    .caseDefinitionKey(caseDefinitionKey)
+                    .caseDefinitionId(definition.getId())
                     .variables(variables != null ? variables : Collections.emptyMap())
                     .businessKey(businessKey)
                     .tenantId(tenantId)
                     .start();
         } else {
+            // Global case - use the case definition's tenant (empty)
             caseInstance = cmmnRuntimeService.createCaseInstanceBuilder()
-                    .caseDefinitionKey(caseDefinitionKey)
+                    .caseDefinitionId(definition.getId())
                     .variables(variables != null ? variables : Collections.emptyMap())
                     .businessKey(businessKey)
                     .start();
@@ -109,7 +148,7 @@ public class CaseService {
             query.caseInstanceStartedBefore(Date.from(startDateTo.atZone(ZoneId.systemDefault()).toInstant()));
         }
 
-        query.orderByCaseInstanceStartTime().desc();
+        query.orderByStartTime().desc();
         List<CaseInstance> instances = query.listPage(page * size, size);
 
         return instances.stream()

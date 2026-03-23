@@ -32,14 +32,37 @@ public class DecisionService {
     public List<DefinitionDTO> listDecisionDefinitions() {
         String tenantId = MultiTenantFilter.getCurrentTenantId();
 
-        var query = dmnRepositoryService.createDecisionQuery().latestVersion();
+        // Get both tenant-specific AND global (null tenant) decision definitions
+        // Global definitions are auto-deployed from classpath and available to all tenants
+        List<DmnDecision> allDecisions = new ArrayList<>();
+
+        // Add tenant-specific decisions
         if (tenantId != null) {
-            query.decisionTenantId(tenantId);
+            List<DmnDecision> tenantDecisions = dmnRepositoryService
+                    .createDecisionQuery()
+                    .latestVersion()
+                    .decisionTenantId(tenantId)
+                    .list();
+            allDecisions.addAll(tenantDecisions);
         }
 
-        List<DmnDecision> decisions = query.list();
+        // Add global (auto-deployed) decisions
+        List<DmnDecision> globalDecisions = dmnRepositoryService
+                .createDecisionQuery()
+                .latestVersion()
+                .decisionTenantId("")  // Empty string = global decisions
+                .list();
 
-        return decisions.stream()
+        // Merge, avoiding duplicates by key
+        for (DmnDecision globalDef : globalDecisions) {
+            boolean exists = allDecisions.stream()
+                    .anyMatch(def -> def.getKey().equals(globalDef.getKey()));
+            if (!exists) {
+                allDecisions.add(globalDef);
+            }
+        }
+
+        return allDecisions.stream()
                 .map(this::toDefinitionDTO)
                 .collect(Collectors.toList());
     }
@@ -48,14 +71,27 @@ public class DecisionService {
     public DecisionExecutionDTO executeDecision(String decisionKey, Map<String, Object> inputVariables) {
         String tenantId = MultiTenantFilter.getCurrentTenantId();
 
-        // Verify definition exists
-        var defQuery = dmnRepositoryService.createDecisionQuery()
-                .decisionKey(decisionKey)
-                .latestVersion();
+        // Find decision definition (check tenant-specific first, then global)
+        DmnDecision definition = null;
+
         if (tenantId != null) {
-            defQuery.decisionTenantId(tenantId);
+            // Try tenant-specific first
+            definition = dmnRepositoryService.createDecisionQuery()
+                    .decisionKey(decisionKey)
+                    .decisionTenantId(tenantId)
+                    .latestVersion()
+                    .singleResult();
         }
-        DmnDecision definition = defQuery.singleResult();
+
+        // Fall back to global (empty tenant) if not found
+        if (definition == null) {
+            definition = dmnRepositoryService.createDecisionQuery()
+                    .decisionKey(decisionKey)
+                    .decisionTenantId("")
+                    .latestVersion()
+                    .singleResult();
+        }
+
         if (definition == null) {
             throw new IllegalArgumentException("Decision definition not found: " + decisionKey);
         }
@@ -64,13 +100,15 @@ public class DecisionService {
         Map<String, Object> inputs = inputVariables != null ? inputVariables : Collections.emptyMap();
         List<Map<String, Object>> results;
 
-        if (tenantId != null) {
+        if (tenantId != null && !"".equals(definition.getTenantId())) {
+            // Tenant-specific decision
             results = dmnRuleService.createExecuteDecisionBuilder()
                     .decisionKey(decisionKey)
                     .variables(inputs)
                     .tenantId(tenantId)
                     .execute();
         } else {
+            // Global decision
             results = dmnRuleService.createExecuteDecisionBuilder()
                     .decisionKey(decisionKey)
                     .variables(inputs)
