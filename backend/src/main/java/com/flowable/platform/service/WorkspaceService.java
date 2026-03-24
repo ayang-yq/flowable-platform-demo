@@ -178,14 +178,37 @@ public class WorkspaceService {
     private List<DefinitionDTO> listBpmnDefinitions() {
         String tenantId = MultiTenantFilter.getCurrentTenantId();
 
-        var query = repositoryService.createProcessDefinitionQuery().latestVersion();
+        // Get both tenant-specific AND global (empty tenant) process definitions
+        // Global processes are auto-deployed from classpath and available to all tenants
+        List<ProcessDefinition> tenantDefinitions = new ArrayList<>();
+        List<ProcessDefinition> globalDefinitions = new ArrayList<>();
+
+        // Query tenant-specific definitions
         if (tenantId != null) {
-            query.processDefinitionTenantId(tenantId);
+            tenantDefinitions = repositoryService.createProcessDefinitionQuery()
+                    .processDefinitionTenantId(tenantId)
+                    .latestVersion()
+                    .list();
         }
 
-        List<ProcessDefinition> definitions = query.list();
+        // Query global definitions (empty string = auto-deployed processes)
+        globalDefinitions = repositoryService.createProcessDefinitionQuery()
+                .processDefinitionTenantId("")
+                .latestVersion()
+                .list();
 
-        return definitions.stream()
+        // Merge both lists, removing duplicates (in case a process exists in both)
+        List<ProcessDefinition> allDefinitions = new ArrayList<>(tenantDefinitions);
+        for (ProcessDefinition globalDef : globalDefinitions) {
+            // Only add global definition if not already present in tenant-specific list
+            boolean exists = tenantDefinitions.stream()
+                    .anyMatch(def -> def.getKey().equals(globalDef.getKey()));
+            if (!exists) {
+                allDefinitions.add(globalDef);
+            }
+        }
+
+        return allDefinitions.stream()
                 .map(this::toBpmnDefinitionDTO)
                 .collect(Collectors.toList());
     }
