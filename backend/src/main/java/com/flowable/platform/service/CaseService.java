@@ -12,7 +12,10 @@ import org.flowable.cmmn.api.repository.CmmnDeployment;
 import org.flowable.cmmn.api.runtime.CaseInstance;
 import org.flowable.cmmn.api.runtime.CaseInstanceQuery;
 import org.flowable.cmmn.api.runtime.PlanItemInstance;
+import org.flowable.engine.IdentityService;
 import org.flowable.task.api.TaskInfo;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,15 +31,18 @@ public class CaseService {
     private final CmmnHistoryService cmmnHistoryService;
     private final CmmnRepositoryService cmmnRepositoryService;
     private final AuditService auditService;
+    private final IdentityService identityService;
 
     public CaseService(CmmnRuntimeService cmmnRuntimeService,
                        CmmnHistoryService cmmnHistoryService,
                        CmmnRepositoryService cmmnRepositoryService,
-                       AuditService auditService) {
+                       AuditService auditService,
+                       IdentityService identityService) {
         this.cmmnRuntimeService = cmmnRuntimeService;
         this.cmmnHistoryService = cmmnHistoryService;
         this.cmmnRepositoryService = cmmnRepositoryService;
         this.auditService = auditService;
+        this.identityService = identityService;
     }
 
     public List<DefinitionDTO> listCaseDefinitions() {
@@ -106,28 +112,56 @@ public class CaseService {
             throw new IllegalArgumentException("Case definition not found: " + caseDefinitionKey);
         }
 
-        // Start case instance with appropriate tenant context
-        CaseInstance caseInstance;
-        if (tenantId != null && !"".equals(definition.getTenantId())) {
-            // Tenant-specific case
-            caseInstance = cmmnRuntimeService.createCaseInstanceBuilder()
-                    .caseDefinitionId(definition.getId())
-                    .variables(variables != null ? variables : Collections.emptyMap())
-                    .businessKey(businessKey)
-                    .tenantId(tenantId)
-                    .start();
-        } else {
-            // Global case - use the case definition's tenant (empty)
-            caseInstance = cmmnRuntimeService.createCaseInstanceBuilder()
-                    .caseDefinitionId(definition.getId())
-                    .variables(variables != null ? variables : Collections.emptyMap())
-                    .businessKey(businessKey)
-                    .start();
+        // Set authenticated user context for Flowable's ${initiator} variable
+        String authenticatedUserId = getCurrentUser();
+        System.out.println("=== DEBUG CaseService.startCaseInstance ===");
+        System.out.println("Case definition key: " + caseDefinitionKey);
+        System.out.println("Authenticated user from SecurityContext: " + authenticatedUserId);
+
+        // Prepare variables, adding initiator if authenticated
+        Map<String, Object> variablesWithInitiator = new HashMap<>();
+        if (variables != null) {
+            variablesWithInitiator.putAll(variables);
+        }
+        if (authenticatedUserId != null) {
+            variablesWithInitiator.put("initiator", authenticatedUserId);
+            System.out.println("Added initiator variable: " + authenticatedUserId);
         }
 
-        auditService.logAction("CASE_STARTED", "CASE_INSTANCE", caseInstance.getId(), null);
+        try {
+            if (authenticatedUserId != null) {
+                identityService.setAuthenticatedUserId(authenticatedUserId);
+                System.out.println("Set authenticatedUserId in Flowable: " + authenticatedUserId);
+            } else {
+                System.out.println("WARNING: authenticatedUserId is NULL - ${initiator} will not work!");
+            }
 
-        return toInstanceDTO(caseInstance, definition);
+            // Start case instance with appropriate tenant context
+            CaseInstance caseInstance;
+            if (tenantId != null && !"".equals(definition.getTenantId())) {
+                // Tenant-specific case
+                caseInstance = cmmnRuntimeService.createCaseInstanceBuilder()
+                        .caseDefinitionId(definition.getId())
+                        .variables(variablesWithInitiator)
+                        .businessKey(businessKey)
+                        .tenantId(tenantId)
+                        .start();
+            } else {
+                // Global case - use the case definition's tenant (empty)
+                caseInstance = cmmnRuntimeService.createCaseInstanceBuilder()
+                        .caseDefinitionId(definition.getId())
+                        .variables(variablesWithInitiator)
+                        .businessKey(businessKey)
+                        .start();
+            }
+
+            auditService.logAction("CASE_STARTED", "CASE_INSTANCE", caseInstance.getId(), null);
+
+            return toInstanceDTO(caseInstance, definition);
+        } finally {
+            // Always clear the authenticated user to avoid thread pool contamination
+            identityService.setAuthenticatedUserId(null);
+        }
     }
 
     public List<InstanceDTO> listActiveCaseInstances(int page, int size, String search, String startedBy,
@@ -136,7 +170,11 @@ public class CaseService {
 
         CaseInstanceQuery query = cmmnRuntimeService.createCaseInstanceQuery();
         if (tenantId != null) {
-            query.caseInstanceTenantId(tenantId);
+            // Include both tenant-specific instances AND global instances (no tenant ID)
+            query.or()
+                   .caseInstanceTenantId(tenantId)
+                   .caseInstanceTenantId("")  // Empty string = global instances
+               .endOr();
         }
         if (startedBy != null && !startedBy.isBlank()) {
             query.caseInstanceStartedBy(startedBy);
@@ -165,7 +203,11 @@ public class CaseService {
         String tenantId = MultiTenantFilter.getCurrentTenantId();
         CaseInstanceQuery query = cmmnRuntimeService.createCaseInstanceQuery();
         if (tenantId != null) {
-            query.caseInstanceTenantId(tenantId);
+            // Include both tenant-specific instances AND global instances (no tenant ID)
+            query.or()
+                   .caseInstanceTenantId(tenantId)
+                   .caseInstanceTenantId("")  // Empty string = global instances
+               .endOr();
         }
         if (startedBy != null && !startedBy.isBlank()) {
             query.caseInstanceStartedBy(startedBy);
@@ -182,7 +224,11 @@ public class CaseService {
         HistoricCaseInstanceQuery query = cmmnHistoryService.createHistoricCaseInstanceQuery()
                 .finished();
         if (tenantId != null) {
-            query.caseInstanceTenantId(tenantId);
+            // Include both tenant-specific instances AND global instances (no tenant ID)
+            query.or()
+                   .caseInstanceTenantId(tenantId)
+                   .caseInstanceTenantId("")  // Empty string = global instances
+               .endOr();
         }
         if (startedBy != null && !startedBy.isBlank()) {
             query.startedBy(startedBy);
@@ -212,7 +258,11 @@ public class CaseService {
         String tenantId = MultiTenantFilter.getCurrentTenantId();
         HistoricCaseInstanceQuery query = cmmnHistoryService.createHistoricCaseInstanceQuery().finished();
         if (tenantId != null) {
-            query.caseInstanceTenantId(tenantId);
+            // Include both tenant-specific instances AND global instances (no tenant ID)
+            query.or()
+                   .caseInstanceTenantId(tenantId)
+                   .caseInstanceTenantId("")  // Empty string = global instances
+               .endOr();
         }
         return query.count();
     }
@@ -337,5 +387,14 @@ public class CaseService {
         detail.setStatus(source.getStatus());
         detail.setBusinessKey(source.getBusinessKey());
         detail.setTenantId(source.getTenantId());
+    }
+
+    private String getCurrentUser() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            return authentication != null ? authentication.getName() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

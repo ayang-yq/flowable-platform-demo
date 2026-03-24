@@ -7,6 +7,8 @@ import org.flowable.engine.*;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,17 +25,20 @@ public class ProcessService {
     private final RepositoryService repositoryService;
     private final HistoryService historyService;
     private final AuditService auditService;
+    private final IdentityService identityService;
 
     public ProcessService(RuntimeService runtimeService,
                          TaskService taskService,
                          RepositoryService repositoryService,
                          HistoryService historyService,
-                         AuditService auditService) {
+                         AuditService auditService,
+                         IdentityService identityService) {
         this.runtimeService = runtimeService;
         this.taskService = taskService;
         this.repositoryService = repositoryService;
         this.historyService = historyService;
         this.auditService = auditService;
+        this.identityService = identityService;
     }
 
     @Transactional
@@ -69,27 +74,55 @@ public class ProcessService {
             throw new IllegalArgumentException("Process definition not found: " + processDefinitionKey);
         }
 
-        // Start process instance with appropriate tenant context
-        ProcessInstance processInstance;
-        if (tenantId != null && !"".equals(definition.getTenantId())) {
-            // Tenant-specific process
-            processInstance = runtimeService.createProcessInstanceBuilder()
-                    .processDefinitionId(definition.getId())
-                    .variables(variables != null ? variables : Collections.emptyMap())
-                    .tenantId(tenantId)
-                    .start();
-        } else {
-            // Global process - use the process definition's tenant (empty) or current tenant
-            processInstance = runtimeService.createProcessInstanceBuilder()
-                    .processDefinitionId(definition.getId())
-                    .variables(variables != null ? variables : Collections.emptyMap())
-                    .start();
+        // Set authenticated user context for Flowable's ${initiator} variable
+        String authenticatedUserId = getCurrentUser();
+        System.out.println("=== DEBUG ProcessService.startProcessInstance ===");
+        System.out.println("Process definition key: " + processDefinitionKey);
+        System.out.println("Authenticated user from SecurityContext: " + authenticatedUserId);
+
+        // Prepare variables, adding initiator if authenticated
+        Map<String, Object> variablesWithInitiator = new HashMap<>();
+        if (variables != null) {
+            variablesWithInitiator.putAll(variables);
+        }
+        if (authenticatedUserId != null) {
+            variablesWithInitiator.put("initiator", authenticatedUserId);
+            System.out.println("Added initiator variable: " + authenticatedUserId);
         }
 
-        // Log audit
-        auditService.logAction("PROCESS_STARTED", "PROCESS_INSTANCE", processInstance.getId(), null);
+        try {
+            if (authenticatedUserId != null) {
+                identityService.setAuthenticatedUserId(authenticatedUserId);
+                System.out.println("Set authenticatedUserId in Flowable: " + authenticatedUserId);
+            } else {
+                System.out.println("WARNING: authenticatedUserId is NULL - ${initiator} will not work!");
+            }
 
-        return processInstance;
+            // Start process instance with appropriate tenant context
+            ProcessInstance processInstance;
+            if (tenantId != null && !"".equals(definition.getTenantId())) {
+                // Tenant-specific process
+                processInstance = runtimeService.createProcessInstanceBuilder()
+                        .processDefinitionId(definition.getId())
+                        .variables(variablesWithInitiator)
+                        .tenantId(tenantId)
+                        .start();
+            } else {
+                // Global process - use the process definition's tenant (empty) or current tenant
+                processInstance = runtimeService.createProcessInstanceBuilder()
+                        .processDefinitionId(definition.getId())
+                        .variables(variablesWithInitiator)
+                        .start();
+            }
+
+            // Log audit
+            auditService.logAction("PROCESS_STARTED", "PROCESS_INSTANCE", processInstance.getId(), null);
+
+            return processInstance;
+        } finally {
+            // Always clear the authenticated user to avoid thread pool contamination
+            identityService.setAuthenticatedUserId(null);
+        }
     }
 
     @Transactional
@@ -202,5 +235,14 @@ public class ProcessService {
         dto.setCategory(task.getCategory());
 
         return dto;
+    }
+
+    private String getCurrentUser() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            return authentication != null ? authentication.getName() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

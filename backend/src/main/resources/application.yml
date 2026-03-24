@@ -150,7 +150,7 @@ server:
   servlet:
     context-path: /
   compression:
-    enabled: true
+    enabled: false  # Disabled temporarily for debugging response bodies
   tomcat:
     threads:
       max: 200

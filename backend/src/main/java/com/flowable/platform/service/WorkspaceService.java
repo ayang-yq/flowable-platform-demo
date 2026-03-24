@@ -219,7 +219,11 @@ public class WorkspaceService {
 
         ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
         if (tenantId != null) {
-            query.processInstanceTenantId(tenantId);
+            // Include both tenant-specific instances AND global instances (no tenant ID)
+            query.or()
+                   .processInstanceTenantId(tenantId)
+                   .processInstanceTenantId("")  // Empty string = global instances
+               .endOr();
         }
         if (startedBy != null && !startedBy.isBlank()) {
             query.startedBy(startedBy);
@@ -240,7 +244,11 @@ public class WorkspaceService {
         String tenantId = MultiTenantFilter.getCurrentTenantId();
         ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
         if (tenantId != null) {
-            query.processInstanceTenantId(tenantId);
+            // Include both tenant-specific instances AND global instances (no tenant ID)
+            query.or()
+                   .processInstanceTenantId(tenantId)
+                   .processInstanceTenantId("")  // Empty string = global instances
+               .endOr();
         }
         if (startedBy != null && !startedBy.isBlank()) {
             query.startedBy(startedBy);
@@ -257,7 +265,11 @@ public class WorkspaceService {
         HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery()
                 .finished();
         if (tenantId != null) {
-            query.processInstanceTenantId(tenantId);
+            // Include both tenant-specific instances AND global instances (no tenant ID)
+            query.or()
+                   .processInstanceTenantId(tenantId)
+                   .processInstanceTenantId("")  // Empty string = global instances
+               .endOr();
         }
         if (startedBy != null && !startedBy.isBlank()) {
             query.startedBy(startedBy);
@@ -290,7 +302,11 @@ public class WorkspaceService {
         String tenantId = MultiTenantFilter.getCurrentTenantId();
         HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().finished();
         if (tenantId != null) {
-            query.processInstanceTenantId(tenantId);
+            // Include both tenant-specific instances AND global instances (no tenant ID)
+            query.or()
+                   .processInstanceTenantId(tenantId)
+                   .processInstanceTenantId("")  // Empty string = global instances
+               .endOr();
         }
         return query.count();
     }
