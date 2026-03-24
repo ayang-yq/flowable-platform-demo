@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Clock, User, Key, FileText } from 'lucide-react';
-import { apiClient } from '@/lib/api';
+import { apiClient, DiagramData } from '@/lib/api';
 import TypeBadge from '@/components/workspace/TypeBadge';
 import StatusBadge from '@/components/workspace/StatusBadge';
+import { BpmnViewer } from '@/components/diagram';
+import { CmmnViewer } from '@/components/diagram';
 
 interface TaskDTO {
   id: string;
@@ -59,6 +61,11 @@ export default function InstanceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Diagram state
+  const [diagramData, setDiagramData] = useState<DiagramData | null>(null);
+  const [diagramLoading, setDiagramLoading] = useState(false);
+  const [diagramError, setDiagramError] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchDetail = async () => {
       try {
@@ -75,6 +82,34 @@ export default function InstanceDetailPage() {
     };
     fetchDetail();
   }, [id, type]);
+
+  // Fetch diagram data when detail is loaded
+  useEffect(() => {
+    if (!detail || detail.status !== 'ACTIVE') return;
+
+    const fetchDiagram = async () => {
+      setDiagramLoading(true);
+      setDiagramError(null);
+      try {
+        let data: DiagramData;
+        if (type === 'BPMN') {
+          data = await apiClient.getProcessInstanceDiagram(id);
+        } else if (type === 'CMMN') {
+          data = await apiClient.getCaseInstanceDiagram(id);
+        } else {
+          return; // DMN doesn't have diagrams
+        }
+        setDiagramData(data);
+      } catch (err) {
+        setDiagramError('Failed to load diagram');
+        console.error('Diagram fetch error:', err);
+      } finally {
+        setDiagramLoading(false);
+      }
+    };
+
+    fetchDiagram();
+  }, [detail, type, id]);
 
   if (loading) {
     return (
@@ -185,6 +220,51 @@ export default function InstanceDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Diagram Viewer */}
+        {detail.status === 'ACTIVE' && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              {type === 'BPMN' ? 'Process Diagram' : 'Case Diagram'}
+            </h2>
+            {diagramLoading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span className="ml-3 text-sm text-gray-600">Loading diagram...</span>
+              </div>
+            )}
+            {diagramError && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 text-yellow-700">
+                {diagramError}
+              </div>
+            )}
+            {!diagramLoading && !diagramError && diagramData && (
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                {type === 'BPMN' && (
+                  <BpmnViewer
+                    xml={diagramData.diagramXml}
+                    activeElementIds={diagramData.activeElementIds}
+                    completedElementIds={diagramData.completedElementIds}
+                    currentElementId={diagramData.currentElementId || ''}
+                  />
+                )}
+                {type === 'CMMN' && (
+                  <CmmnViewer
+                    xml={diagramData.diagramXml}
+                    activeElementIds={diagramData.activeElementIds}
+                    completedElementIds={diagramData.completedElementIds}
+                    currentElementId={diagramData.currentElementId || ''}
+                  />
+                )}
+              </div>
+            )}
+            {!diagramLoading && !diagramError && !diagramData && (
+              <div className="text-center py-12 text-gray-500">
+                No diagram available for this {type.toLowerCase()} instance
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Current activities */}
         {detail.currentActivities && detail.currentActivities.length > 0 && (

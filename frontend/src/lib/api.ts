@@ -7,6 +7,13 @@ export interface ApiResponse<T = any> {
   data: T;
 }
 
+export interface DiagramData {
+  diagramXml: string;
+  activeElementIds: string[];
+  completedElementIds: string[];
+  currentElementId: string | null;
+}
+
 class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
@@ -123,6 +130,26 @@ class ApiClient {
     }
 
     return response.json();
+  }
+
+  /**
+   * Fetch BPMN diagram data for a process instance
+   */
+  async getProcessInstanceDiagram(processInstanceId: string): Promise<DiagramData> {
+    const response = await this.get<DiagramData>(
+      `/api/workspace/process-instances/${processInstanceId}/diagram`
+    );
+    return response.data;
+  }
+
+  /**
+   * Fetch CMMN diagram data for a case instance
+   */
+  async getCaseInstanceDiagram(caseInstanceId: string): Promise<DiagramData> {
+    const response = await this.get<DiagramData>(
+      `/api/workspace/case-instances/${caseInstanceId}/diagram`
+    );
+    return response.data;
   }
 }
 

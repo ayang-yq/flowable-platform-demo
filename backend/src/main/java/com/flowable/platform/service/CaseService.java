@@ -5,6 +5,8 @@ import com.flowable.platform.dto.*;
 import org.flowable.cmmn.api.CmmnHistoryService;
 import org.flowable.cmmn.api.CmmnRepositoryService;
 import org.flowable.cmmn.api.CmmnRuntimeService;
+import org.flowable.cmmn.converter.CmmnXmlConverter;
+import org.flowable.cmmn.model.CmmnModel;
 import org.flowable.cmmn.api.history.HistoricCaseInstance;
 import org.flowable.cmmn.api.history.HistoricCaseInstanceQuery;
 import org.flowable.cmmn.api.repository.CaseDefinition;
@@ -396,5 +398,65 @@ public class CaseService {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public DiagramDataDTO getCaseInstanceDiagram(String caseInstanceId) {
+        // Get case instance
+        CaseInstance instance = cmmnRuntimeService.createCaseInstanceQuery()
+                .caseInstanceId(caseInstanceId)
+                .singleResult();
+
+        if (instance == null) {
+            return null;
+        }
+
+        // Get case definition
+        CaseDefinition definition = cmmnRepositoryService.createCaseDefinitionQuery()
+                .caseDefinitionId(instance.getCaseDefinitionId())
+                .singleResult();
+
+        if (definition == null) {
+            return null;
+        }
+
+        // Get CMMN model and convert to XML
+        CmmnModel cmmnModel = cmmnRepositoryService.getCmmnModel(definition.getId());
+        CmmnXmlConverter xmlConverter = new CmmnXmlConverter();
+        byte[] xmlBytes = xmlConverter.convertToXML(cmmnModel);
+        String diagramXml = new String(xmlBytes);
+
+        // Calculate active and completed elements
+        List<String> activeElementIds = new ArrayList<>();
+        List<String> completedElementIds = new ArrayList<>();
+        String currentElementId = null;
+
+        // Get active plan items (human tasks, stages, milestones currently active)
+        List<PlanItemInstance> activePlanItems = cmmnRuntimeService.createPlanItemInstanceQuery()
+                .caseInstanceId(caseInstanceId)
+                .planItemInstanceStateActive()
+                .list();
+
+        for (PlanItemInstance planItem : activePlanItems) {
+            String elementId = planItem.getElementId(); // Use getElementId instead of getDefinitionId
+            if (elementId != null) {
+                activeElementIds.add(elementId);
+                // Use first active plan item as current element
+                if (currentElementId == null) {
+                    currentElementId = elementId;
+                }
+            }
+        }
+
+        // Note: Historic plan item queries are not available in all Flowable versions
+        // For now, completed elements can be populated later if needed
+
+        // Create diagram data DTO
+        DiagramDataDTO diagramData = new DiagramDataDTO();
+        diagramData.setDiagramXml(diagramXml);
+        diagramData.setActiveElementIds(activeElementIds);
+        diagramData.setCompletedElementIds(completedElementIds);
+        diagramData.setCurrentElementId(currentElementId);
+
+        return diagramData;
     }
 }

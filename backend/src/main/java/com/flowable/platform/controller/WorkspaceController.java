@@ -135,4 +135,22 @@ public class WorkspaceController {
         DashboardSummaryDTO summary = workspaceService.getDashboardSummary();
         return ResponseEntity.ok(ApiResponse.success(summary));
     }
+
+    @GetMapping("/process-instances/{id}/diagram")
+    public ResponseEntity<ApiResponse<DiagramDataDTO>> getProcessInstanceDiagram(@PathVariable String id) {
+        DiagramDataDTO diagramData = processService.getProcessInstanceDiagram(id);
+        if (diagramData == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(ApiResponse.success(diagramData));
+    }
+
+    @GetMapping("/case-instances/{id}/diagram")
+    public ResponseEntity<ApiResponse<DiagramDataDTO>> getCaseInstanceDiagram(@PathVariable String id) {
+        DiagramDataDTO diagramData = caseService.getCaseInstanceDiagram(id);
+        if (diagramData == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(ApiResponse.success(diagramData));
+    }
 }

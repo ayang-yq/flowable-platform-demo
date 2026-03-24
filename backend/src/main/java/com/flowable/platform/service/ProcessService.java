@@ -1,8 +1,11 @@
 package com.flowable.platform.service;
 
 import com.flowable.platform.config.MultiTenantFilter;
+import com.flowable.platform.dto.DiagramDataDTO;
 import com.flowable.platform.dto.ProcessDTO;
 import com.flowable.platform.dto.TaskDTO;
+import org.flowable.bpmn.converter.BpmnXMLConverter;
+import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.*;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -244,5 +247,87 @@ public class ProcessService {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public DiagramDataDTO getProcessInstanceDiagram(String processInstanceId) {
+        // Get process instance
+        ProcessInstance instance = runtimeService.createProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+
+        if (instance == null) {
+            return null;
+        }
+
+        // Get process definition
+        ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
+                .processDefinitionId(instance.getProcessDefinitionId())
+                .singleResult();
+
+        if (definition == null) {
+            return null;
+        }
+
+        // Get BPMN model and convert to XML
+        BpmnModel bpmnModel = repositoryService.getBpmnModel(definition.getId());
+        BpmnXMLConverter xmlConverter = new BpmnXMLConverter();
+        byte[] xmlBytes = xmlConverter.convertToXML(bpmnModel);
+        String diagramXml = new String(xmlBytes);
+
+        // Calculate active and completed elements
+        List<String> activeElementIds = new ArrayList<>();
+        List<String> completedElementIds = new ArrayList<>();
+        String currentElementId = null;
+
+        // Get active tasks (user tasks, service tasks currently executing)
+        List<org.flowable.task.api.Task> activeTasks = taskService.createTaskQuery()
+                .processInstanceId(processInstanceId)
+                .list();
+
+        for (org.flowable.task.api.Task task : activeTasks) {
+            String taskDefinitionKey = task.getTaskDefinitionKey();
+            if (taskDefinitionKey != null) {
+                activeElementIds.add(taskDefinitionKey);
+                // Use first active task as current element
+                if (currentElementId == null) {
+                    currentElementId = taskDefinitionKey;
+                }
+            }
+        }
+
+        // Get active executions (for parallel gateways, service tasks, etc.)
+        List<org.flowable.engine.runtime.Execution> activeExecutions = runtimeService.createExecutionQuery()
+                .processInstanceId(processInstanceId)
+                .list();
+
+        for (org.flowable.engine.runtime.Execution execution : activeExecutions) {
+            String activityId = execution.getActivityId();
+            if (activityId != null && !activeElementIds.contains(activityId)) {
+                activeElementIds.add(activityId);
+            }
+        }
+
+        // Get completed activities from history
+        List<org.flowable.engine.history.HistoricActivityInstance> completedActivities =
+                historyService.createHistoricActivityInstanceQuery()
+                        .processInstanceId(processInstanceId)
+                        .finished()
+                        .list();
+
+        for (org.flowable.engine.history.HistoricActivityInstance activity : completedActivities) {
+            String activityId = activity.getActivityId();
+            if (activityId != null && !completedElementIds.contains(activityId)) {
+                completedElementIds.add(activityId);
+            }
+        }
+
+        // Create diagram data DTO
+        DiagramDataDTO diagramData = new DiagramDataDTO();
+        diagramData.setDiagramXml(diagramXml);
+        diagramData.setActiveElementIds(activeElementIds);
+        diagramData.setCompletedElementIds(completedElementIds);
+        diagramData.setCurrentElementId(currentElementId);
+
+        return diagramData;
     }
 }
