@@ -40,14 +40,20 @@ export function CmmnViewer({
       return;
     }
 
-    console.log('CmmnViewer: Initializing with XML length:', xml.length);
-    console.log('CmmnViewer: Active elements:', activeElementIds);
-    console.log('CmmnViewer: Completed elements:', completedElementIds);
-    console.log('CmmnViewer: XML preview:', xml.substring(0, 200));
+    console.log('CmmnViewer: ===== INITIALIZATION START =====');
+    console.log('CmmnViewer: Container element:', containerRef.current);
+    console.log('CmmnViewer: XML length:', xml.length);
+    console.log('CmmnViewer: XML preview (first 300 chars):', xml.substring(0, 300));
+    console.log('CmmnViewer: Active elements from backend:', activeElementIds);
+    console.log('CmmnViewer: Completed elements from backend:', completedElementIds);
+    console.log('CmmnViewer: Current element from backend:', currentElementId);
 
     let modeler: any = null;
 
     try {
+      console.log('CmmnViewer: About to create CmmnModeler...');
+      console.log('CmmnModeler constructor:', typeof CmmnModeler, CmmnModeler);
+
       modeler = new CmmnModeler({
         container: containerRef.current,
         keyboard: {
@@ -56,16 +62,25 @@ export function CmmnViewer({
       });
 
       console.log('CmmnViewer: Modeler created successfully');
+      console.log('CmmnViewer: Modeler object:', modeler);
+      console.log('CmmnViewer: Modeler methods:', Object.keys(modeler).filter(k => typeof modeler[k] === 'function'));
+
       modelerRef.current = modeler;
 
       // Check if importXML is a function
       if (typeof modeler.importXML !== 'function') {
         console.error('CmmnViewer: importXML is not a function on modeler');
+        console.error('CmmnViewer: Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(modeler)));
         return;
       }
 
+      console.log('CmmnViewer: About to call importXML...');
       // Import CMMN XML
       const importPromise = modeler.importXML(xml);
+
+      console.log('CmmnViewer: importXML returned:', importPromise);
+      console.log('CmmnViewer: importPromise type:', typeof importPromise);
+      console.log('CmmnViewer: Has then method?', typeof importPromise?.then);
 
       // Check if importPromise exists and has .then method
       if (!importPromise || typeof importPromise.then !== 'function') {
@@ -74,23 +89,44 @@ export function CmmnViewer({
       }
 
       importPromise.then(() => {
-        console.log('CmmnViewer: XML imported successfully');
+        console.log('CmmnViewer: ===== XML IMPORT SUCCESS =====');
+
+        // Get the canvas to check if diagram was rendered
+        const canvas = modeler.get('canvas');
+        console.log('CmmnViewer: Canvas object:', canvas);
+        console.log('CmmnViewer: Canvas methods:', Object.keys(canvas).filter(k => typeof canvas[k] === 'function'));
+
+        // Get the element registry
+        const elementRegistry = modeler.get('elementRegistry');
+        console.log('CmmnViewer: ElementRegistry object:', elementRegistry);
+
+        const allElements = elementRegistry.getAll();
+        console.log('CmmnViewer: Total elements in registry:', allElements.length);
+        console.log('CmmnViewer: All elements:', allElements.map((el: any) => ({ id: el.id, type: el.type, name: el.name })));
+
         // Apply overlays for active and completed elements
-        applyOverlays(modeler!, activeElementIds, completedElementIds, currentElementId);
+        console.log('CmmnViewer: About to apply overlays...');
+        applyOverlays(modeler, activeElementIds, completedElementIds, currentElementId);
 
         // Fit to viewport
-        const canvas = modeler!.get('canvas') as any;
-        canvas.zoom('fit-viewport');
-        console.log('CmmnViewer: Diagram rendered and fitted');
+        console.log('CmmnViewer: About to fit to viewport...');
+        (canvas as any).zoom('fit-viewport');
+        console.log('CmmnViewer: ===== DIAGRAM RENDER COMPLETE =====');
       }).catch((err: Error) => {
+        console.error('CmmnViewer: ===== XML IMPORT FAILED =====');
         console.error('CmmnViewer: Failed to import CMMN diagram:', err);
-        console.error('CmmnViewer: Error details:', err);
+        console.error('CmmnViewer: Error name:', err.name);
+        console.error('CmmnViewer: Error message:', err.message);
+        console.error('CmmnViewer: Error stack:', err.stack);
       });
     } catch (error) {
+      console.error('CmmnViewer: ===== EXCEPTION CATCHED =====');
       console.error('CmmnViewer: Error creating modeler:', error);
+      console.error('CmmnViewer: Error details:', error);
     }
 
     return () => {
+      console.log('CmmnViewer: Cleanup - destroying modeler');
       if (modelerRef.current) {
         try {
           modelerRef.current.destroy();

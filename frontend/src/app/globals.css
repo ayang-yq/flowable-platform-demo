@@ -10,6 +10,10 @@
 @import 'cmmn-js/dist/assets/diagram-js.css';
 @import 'cmmn-js/dist/assets/cmmn-font/css/cmmn.css';
 
+/* Additional CMMN styles for icons */
+@import 'cmmn-js/dist/assets/cmmn-font/css/cmmn-codes.css';
+@import 'cmmn-js/dist/assets/cmmn-font/css/cmmn-embedded.css';
+
 @layer base {
   :root {
     --background: 0 0% 100%;
