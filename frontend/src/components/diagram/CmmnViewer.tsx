@@ -41,64 +41,36 @@ export function CmmnViewer({
     }
 
     console.log('CmmnViewer: ===== INITIALIZATION START =====');
-    console.log('CmmnViewer: Container element:', containerRef.current);
     console.log('CmmnViewer: XML length:', xml.length);
-    console.log('CmmnViewer: XML preview (first 300 chars):', xml.substring(0, 300));
     console.log('CmmnViewer: Active elements from backend:', activeElementIds);
-    console.log('CmmnViewer: Completed elements from backend:', completedElementIds);
-    console.log('CmmnViewer: Current element from backend:', currentElementId);
 
     let modeler: any = null;
 
     try {
-      console.log('CmmnViewer: About to create CmmnModeler...');
-      console.log('CmmnModeler constructor:', typeof CmmnModeler, CmmnModeler);
-
       modeler = new CmmnModeler({
         container: containerRef.current,
-        keyboard: {
-          bindTo: document
-        }
+        keyboard: { bindTo: document }
       });
 
       console.log('CmmnViewer: Modeler created successfully');
-      console.log('CmmnViewer: Modeler object:', modeler);
-      console.log('CmmnViewer: Modeler methods:', Object.keys(modeler).filter(k => typeof modeler[k] === 'function'));
-
       modelerRef.current = modeler;
 
-      // Check if importXML is a function
-      if (typeof modeler.importXML !== 'function') {
-        console.error('CmmnViewer: importXML is not a function on modeler');
-        console.error('CmmnViewer: Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(modeler)));
-        return;
-      }
+      // cmmn-js uses event-based API, not Promise-based
+      // We need to listen for the import.parse.complete event
+      const importXmlHandler = (event: any) => {
+        console.log('CmmnViewer: ===== IMPORT PARSE COMPLETE =====');
+        console.log('CmmnViewer: Event error:', event.error);
 
-      console.log('CmmnViewer: About to call importXML...');
-      // Import CMMN XML
-      const importPromise = modeler.importXML(xml);
+        if (event.error) {
+          console.error('CmmnViewer: Import failed:', event.error);
+          return;
+        }
 
-      console.log('CmmnViewer: importXML returned:', importPromise);
-      console.log('CmmnViewer: importPromise type:', typeof importPromise);
-      console.log('CmmnViewer: Has then method?', typeof importPromise?.then);
-
-      // Check if importPromise exists and has .then method
-      if (!importPromise || typeof importPromise.then !== 'function') {
-        console.error('CmmnViewer: importXML did not return a Promise:', importPromise);
-        return;
-      }
-
-      importPromise.then(() => {
-        console.log('CmmnViewer: ===== XML IMPORT SUCCESS =====');
+        console.log('CmmnViewer: XML parsed successfully');
 
         // Get the canvas to check if diagram was rendered
         const canvas = modeler.get('canvas');
-        console.log('CmmnViewer: Canvas object:', canvas);
-        console.log('CmmnViewer: Canvas methods:', Object.keys(canvas).filter(k => typeof canvas[k] === 'function'));
-
-        // Get the element registry
         const elementRegistry = modeler.get('elementRegistry');
-        console.log('CmmnViewer: ElementRegistry object:', elementRegistry);
 
         const allElements = elementRegistry.getAll();
         console.log('CmmnViewer: Total elements in registry:', allElements.length);
@@ -110,24 +82,47 @@ export function CmmnViewer({
 
         // Fit to viewport
         console.log('CmmnViewer: About to fit to viewport...');
-        (canvas as any).zoom('fit-viewport');
+        canvas.zoom('fit-viewport');
         console.log('CmmnViewer: ===== DIAGRAM RENDER COMPLETE =====');
-      }).catch((err: Error) => {
-        console.error('CmmnViewer: ===== XML IMPORT FAILED =====');
-        console.error('CmmnViewer: Failed to import CMMN diagram:', err);
-        console.error('CmmnViewer: Error name:', err.name);
-        console.error('CmmnViewer: Error message:', err.message);
-        console.error('CmmnViewer: Error stack:', err.stack);
-      });
+      };
+
+      // Listen for the import parse complete event
+      modeler.on('import.parse.complete', importXmlHandler);
+
+      // Import the XML - this is synchronous in cmmn-js
+      console.log('CmmnViewer: About to call importXML...');
+      const result = modeler.importXML(xml);
+      console.log('CmmnViewer: importXML returned:', result);
+
+      // If importXML returns a Promise (some versions might), use it
+      if (result && typeof result.then === 'function') {
+        console.log('CmmnViewer: Using Promise-based API');
+        result
+          .then(() => {
+            console.log('CmmnViewer: Promise resolved');
+          })
+          .catch((err: Error) => {
+            console.error('CmmnViewer: Promise rejected:', err);
+          });
+      } else {
+        console.log('CmmnViewer: Using event-based API (no Promise returned)');
+      }
+
+      // Store handler reference for cleanup
+      (modeler as any)._importXmlHandler = importXmlHandler;
+
     } catch (error) {
       console.error('CmmnViewer: ===== EXCEPTION CATCHED =====');
-      console.error('CmmnViewer: Error creating modeler:', error);
-      console.error('CmmnViewer: Error details:', error);
+      console.error('CmmnViewer: Error:', error);
     }
 
     return () => {
       console.log('CmmnViewer: Cleanup - destroying modeler');
       if (modelerRef.current) {
+        // Remove event listener
+        if (modelerRef.current._importXmlHandler) {
+          modelerRef.current.off('import.parse.complete', modelerRef.current._importXmlHandler);
+        }
         try {
           modelerRef.current.destroy();
         } catch (e) {
