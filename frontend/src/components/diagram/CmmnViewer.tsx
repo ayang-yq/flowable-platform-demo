@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import Modeler from 'cmmn-js/lib/Modeler';
 import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+
+// Use require for cmmn-js to avoid CommonJS/ES module issues
+const CmmnModeler = require('cmmn-js/lib/Modeler');
 
 interface CmmnViewerProps {
   xml?: string;
@@ -24,45 +26,77 @@ export function CmmnViewer({
   className = ''
 }: CmmnViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const modelerRef = useRef<Modeler | null>(null);
+  const modelerRef = useRef<any>(null);
   const [zoom, setZoom] = useState(1);
 
   // Initialize CMMN modeler
   useEffect(() => {
-    if (!containerRef.current || !xml) return;
+    if (!containerRef.current || !xml) {
+      console.log('CmmnViewer: Skipping initialization - container or XML missing', {
+        hasContainer: !!containerRef.current,
+        hasXml: !!xml,
+        xmlLength: xml?.length
+      });
+      return;
+    }
 
     console.log('CmmnViewer: Initializing with XML length:', xml.length);
     console.log('CmmnViewer: Active elements:', activeElementIds);
     console.log('CmmnViewer: Completed elements:', completedElementIds);
     console.log('CmmnViewer: XML preview:', xml.substring(0, 200));
 
-    const modeler = new Modeler({
-      container: containerRef.current,
-      keyboard: {
-        bindTo: document
+    let modeler: any = null;
+
+    try {
+      modeler = new CmmnModeler({
+        container: containerRef.current,
+        keyboard: {
+          bindTo: document
+        }
+      });
+
+      console.log('CmmnViewer: Modeler created successfully');
+      modelerRef.current = modeler;
+
+      // Check if importXML is a function
+      if (typeof modeler.importXML !== 'function') {
+        console.error('CmmnViewer: importXML is not a function on modeler');
+        return;
       }
-    });
 
-    modelerRef.current = modeler;
+      // Import CMMN XML
+      const importPromise = modeler.importXML(xml);
 
-    // Import CMMN XML
-    modeler.importXML(xml).then(() => {
-      console.log('CmmnViewer: XML imported successfully');
-      // Apply overlays for active and completed elements
-      applyOverlays(modeler, activeElementIds, completedElementIds, currentElementId);
+      // Check if importPromise exists and has .then method
+      if (!importPromise || typeof importPromise.then !== 'function') {
+        console.error('CmmnViewer: importXML did not return a Promise:', importPromise);
+        return;
+      }
 
-      // Fit to viewport
-      const canvas = modeler.get('canvas') as any;
-      canvas.zoom('fit-viewport');
-      console.log('CmmnViewer: Diagram rendered and fitted');
-    }).catch((err: Error) => {
-      console.error('CmmnViewer: Failed to import CMMN diagram:', err);
-      console.error('CmmnViewer: Error details:', err);
-    });
+      importPromise.then(() => {
+        console.log('CmmnViewer: XML imported successfully');
+        // Apply overlays for active and completed elements
+        applyOverlays(modeler!, activeElementIds, completedElementIds, currentElementId);
+
+        // Fit to viewport
+        const canvas = modeler!.get('canvas') as any;
+        canvas.zoom('fit-viewport');
+        console.log('CmmnViewer: Diagram rendered and fitted');
+      }).catch((err: Error) => {
+        console.error('CmmnViewer: Failed to import CMMN diagram:', err);
+        console.error('CmmnViewer: Error details:', err);
+      });
+    } catch (error) {
+      console.error('CmmnViewer: Error creating modeler:', error);
+    }
 
     return () => {
       if (modelerRef.current) {
-        modelerRef.current.destroy();
+        try {
+          modelerRef.current.destroy();
+        } catch (e) {
+          console.error('CmmnViewer: Error destroying modeler:', e);
+        }
         modelerRef.current = null;
       }
     };
@@ -162,7 +196,7 @@ export function CmmnViewer({
 }
 
 function applyOverlays(
-  modeler: Modeler,
+  modeler: any,
   activeElementIds: string[],
   completedElementIds: string[],
   currentElementId: string
