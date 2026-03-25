@@ -31,6 +31,11 @@ export function CmmnViewer({
   useEffect(() => {
     if (!containerRef.current || !xml) return;
 
+    console.log('CmmnViewer: Initializing with XML length:', xml.length);
+    console.log('CmmnViewer: Active elements:', activeElementIds);
+    console.log('CmmnViewer: Completed elements:', completedElementIds);
+    console.log('CmmnViewer: XML preview:', xml.substring(0, 200));
+
     const modeler = new Modeler({
       container: containerRef.current,
       keyboard: {
@@ -42,14 +47,17 @@ export function CmmnViewer({
 
     // Import CMMN XML
     modeler.importXML(xml).then(() => {
+      console.log('CmmnViewer: XML imported successfully');
       // Apply overlays for active and completed elements
       applyOverlays(modeler, activeElementIds, completedElementIds, currentElementId);
 
       // Fit to viewport
       const canvas = modeler.get('canvas') as any;
       canvas.zoom('fit-viewport');
+      console.log('CmmnViewer: Diagram rendered and fitted');
     }).catch((err: Error) => {
-      console.error('Failed to import CMMN diagram:', err);
+      console.error('CmmnViewer: Failed to import CMMN diagram:', err);
+      console.error('CmmnViewer: Error details:', err);
     });
 
     return () => {
@@ -165,11 +173,32 @@ function applyOverlays(
   // Clear existing overlays
   overlays.clear();
 
+  console.log('CmmnViewer: Applying overlays');
+  console.log('CmmnViewer: Looking for active elements:', activeElementIds);
+  console.log('CmmnViewer: Looking for completed elements:', completedElementIds);
+
+  // Debug: List all available elements in the registry
+  const allElements = elementRegistry.getAll();
+  console.log('CmmnViewer: All elements in registry:', allElements.map((el: any) => ({ id: el.id, type: el.type, name: el.name })));
+
   // Apply orange overlay for active plan items
   activeElementIds.forEach(elementId => {
-    const element = elementRegistry.get(elementId);
+    let element = elementRegistry.get(elementId);
+    console.log(`CmmnViewer: Looking for active element "${elementId}":`, element ? 'FOUND' : 'NOT FOUND');
+
+    // If not found by ID, try to find by name or try variations
+    if (!element) {
+      element = allElements.find((el: any) =>
+        el.id === elementId ||
+        el.name === elementId ||
+        el.id?.includes(elementId) ||
+        el.type === elementId
+      );
+      console.log(`CmmnViewer: Alternative lookup for "${elementId}":`, element ? 'FOUND' : 'NOT FOUND');
+    }
+
     if (element) {
-      overlays.add(elementId, {
+      overlays.add(element.id, {
         position: {
           top: 0,
           left: 0
@@ -181,9 +210,20 @@ function applyOverlays(
 
   // Apply gray overlay for completed plan items
   completedElementIds.forEach(elementId => {
-    const element = elementRegistry.get(elementId);
-    if (element && !activeElementIds.includes(elementId)) {
-      overlays.add(elementId, {
+    let element = elementRegistry.get(elementId);
+    console.log(`CmmnViewer: Looking for completed element "${elementId}":`, element ? 'FOUND' : 'NOT FOUND');
+
+    if (!element) {
+      element = allElements.find((el: any) =>
+        el.id === elementId ||
+        el.name === elementId ||
+        el.id?.includes(elementId) ||
+        el.type === elementId
+      );
+    }
+
+    if (element && !activeElementIds.includes(element.id)) {
+      overlays.add(element.id, {
         position: {
           top: 0,
           left: 0
@@ -196,6 +236,7 @@ function applyOverlays(
   // Apply animated border for current element
   if (currentElementId) {
     const element = elementRegistry.get(currentElementId);
+    console.log(`CmmnViewer: Looking for current element "${currentElementId}":`, element ? 'FOUND' : 'NOT FOUND');
     if (element) {
       overlays.add(currentElementId, {
         position: {

@@ -256,12 +256,22 @@ export default function InstanceDetailPage() {
                   />
                 )}
                 {type === 'CMMN' && (
-                  <CmmnViewer
-                    xml={diagramData.diagramXml}
-                    activeElementIds={diagramData.activeElementIds}
-                    completedElementIds={diagramData.completedElementIds}
-                    currentElementId={diagramData.currentElementId || ''}
-                  />
+                  <>
+                    {console.log('Rendering CMMN viewer with data:', {
+                      hasXml: !!diagramData.diagramXml,
+                      xmlLength: diagramData.diagramXml?.length,
+                      activeCount: diagramData.activeElementIds?.length,
+                      completedCount: diagramData.completedElementIds?.length,
+                      activeElements: diagramData.activeElementIds,
+                      completedElements: diagramData.completedElementIds
+                    })}
+                    <CmmnViewer
+                      xml={diagramData.diagramXml}
+                      activeElementIds={diagramData.activeElementIds}
+                      completedElementIds={diagramData.completedElementIds}
+                      currentElementId={diagramData.currentElementId || ''}
+                    />
+                  </>
                 )}
               </div>
             )}

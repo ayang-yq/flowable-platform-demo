@@ -457,16 +457,33 @@ public class CaseService {
                     .planItemInstanceStateActive()
                     .list();
 
+            System.out.println("=== DEBUG CMMN Diagram ===");
+            System.out.println("Active plan items count: " + activePlanItems.size());
+
             for (PlanItemInstance planItem : activePlanItems) {
-                String elementId = planItem.getElementId(); // Use getElementId instead of getDefinitionId
-                if (elementId != null) {
+                String elementId = planItem.getElementId();
+                String planItemId = planItem.getId();
+                String name = planItem.getName();
+
+                System.out.println("PlanItem: " + name);
+                System.out.println("  ID: " + planItemId);
+                System.out.println("  ElementId (definition): " + elementId);
+
+                // Add both planItem ID and element ID to handle both cases
+                if (planItemId != null) {
+                    activeElementIds.add(planItemId);
+                }
+                if (elementId != null && !elementId.equals(planItemId)) {
                     activeElementIds.add(elementId);
-                    // Use first active plan item as current element
-                    if (currentElementId == null) {
-                        currentElementId = elementId;
-                    }
+                }
+
+                // Use first active plan item as current element
+                if (currentElementId == null) {
+                    currentElementId = planItemId != null ? planItemId : elementId;
                 }
             }
+
+            System.out.println("Active element IDs: " + activeElementIds);
 
             // Note: Historic plan item queries are not available in all Flowable versions
             // For now, completed elements can be populated later if needed
