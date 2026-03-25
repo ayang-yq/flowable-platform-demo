@@ -422,28 +422,46 @@ public class CaseService {
                 return null;
             }
 
-            // Get CMMN XML directly from deployment resources
+            // Get CMMN XML - ALWAYS use model conversion to get complete XML
             String diagramXml = null;
-            try {
-                InputStream cmmnResourceStream = cmmnRepositoryService.getResourceAsStream(
-                        definition.getDeploymentId(),
-                        definition.getResourceName()
-                );
-                if (cmmnResourceStream != null) {
-                    diagramXml = new String(cmmnResourceStream.readAllBytes(),
-                            StandardCharsets.UTF_8);
-                }
-            } catch (Exception e) {
-                System.err.println("Error fetching CMMN resource: " + e.getMessage());
-                // Fall back to model conversion
-            }
 
-            // If direct resource fetch failed, try model conversion
-            if (diagramXml == null) {
-                CmmnModel cmmnModel = cmmnRepositoryService.getCmmnModel(definition.getId());
+            // Get the CMMN model and convert to XML
+            CmmnModel cmmnModel = cmmnRepositoryService.getCmmnModel(definition.getId());
+
+            if (cmmnModel != null) {
+                // Convert model to XML - this should include all elements
                 CmmnXmlConverter xmlConverter = new CmmnXmlConverter();
                 byte[] xmlBytes = xmlConverter.convertToXML(cmmnModel);
                 diagramXml = new String(xmlBytes, StandardCharsets.UTF_8);
+
+                // Ensure DI namespaces are present
+                if (diagramXml != null && !diagramXml.contains("cmmndi:")) {
+                    System.out.println("WARNING: CMMN XML missing DI namespace");
+                    // Add DI namespace to definitions element if missing
+                    diagramXml = diagramXml.replace(
+                        "xmlns=\"http://www.omg.org/spec/CMMN/20151109/MODEL\"",
+                        "xmlns=\"http://www.omg.org/spec/CMMN/20151109/MODEL\" " +
+                        "xmlns:dc=\"http://www.omg.org/spec/CMMN/20151109/DC\" " +
+                        "xmlns:di=\"http://www.omg.org/spec/CMMN/20151109/DI\" " +
+                        "xmlns:cmmndi=\"http://www.omg.org/spec/CMMN/20151109/CMMNDI\""
+                    );
+                }
+            }
+
+            // Fallback: try direct resource fetch if model is null
+            if (diagramXml == null) {
+                try {
+                    InputStream cmmnResourceStream = cmmnRepositoryService.getResourceAsStream(
+                            definition.getDeploymentId(),
+                            definition.getResourceName()
+                    );
+                    if (cmmnResourceStream != null) {
+                        diagramXml = new String(cmmnResourceStream.readAllBytes(),
+                                StandardCharsets.UTF_8);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error fetching CMMN resource: " + e.getMessage());
+                }
             }
 
             // Calculate active and completed elements
