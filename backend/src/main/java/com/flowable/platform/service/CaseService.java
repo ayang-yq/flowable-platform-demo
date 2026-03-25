@@ -2,6 +2,7 @@ package com.flowable.platform.service;
 
 import com.flowable.platform.config.MultiTenantFilter;
 import com.flowable.platform.dto.*;
+import com.flowable.platform.util.CmmnDiGenerator;
 import org.flowable.cmmn.api.CmmnHistoryService;
 import org.flowable.cmmn.api.CmmnRepositoryService;
 import org.flowable.cmmn.api.CmmnRuntimeService;
@@ -434,17 +435,36 @@ public class CaseService {
                 byte[] xmlBytes = xmlConverter.convertToXML(cmmnModel);
                 diagramXml = new String(xmlBytes, StandardCharsets.UTF_8);
 
-                // Ensure DI namespaces are present
-                if (diagramXml != null && !diagramXml.contains("cmmndi:")) {
-                    System.out.println("WARNING: CMMN XML missing DI namespace");
-                    // Add DI namespace to definitions element if missing
-                    diagramXml = diagramXml.replace(
-                        "xmlns=\"http://www.omg.org/spec/CMMN/20151109/MODEL\"",
-                        "xmlns=\"http://www.omg.org/spec/CMMN/20151109/MODEL\" " +
-                        "xmlns:dc=\"http://www.omg.org/spec/CMMN/20151109/DC\" " +
-                        "xmlns:di=\"http://www.omg.org/spec/CMMN/20151109/DI\" " +
-                        "xmlns:cmmndi=\"http://www.omg.org/spec/CMMN/20151109/CMMNDI\""
-                    );
+                // Generate CMMN DI if missing (required by cmmn-js for rendering)
+                // Check for actual <cmmndi:CMMNDI> ELEMENT, not just namespace declaration
+                // The namespace URL contains "CMMNDI>" which can fool simple contains() checks
+                boolean hasCMMNDIElement = false;
+                int cmmndiStart = diagramXml.indexOf("<cmmndi:CMMNDI");
+                if (cmmndiStart >= 0) {
+                    // Find the closing > to verify it's an element, not part of a namespace URL
+                    int cmmndiEnd = diagramXml.indexOf(">", cmmndiStart);
+                    if (cmmndiEnd > cmmndiStart) {
+                        String potentialElement = diagramXml.substring(cmmndiStart, cmmndiEnd + 1);
+                        // It's an element if it doesn't contain "xmlns" (namespace declarations have xmlns)
+                        hasCMMNDIElement = !potentialElement.contains("xmlns");
+                    }
+                }
+
+                if (diagramXml != null && !hasCMMNDIElement) {
+                    System.out.println("CMMN XML missing DI element - generating auto-layout");
+                    System.out.println("Current XML length: " + diagramXml.length());
+                    try {
+                        String originalXml = diagramXml;
+                        diagramXml = CmmnDiGenerator.addDiInformation(diagramXml);
+                        System.out.println("Successfully generated CMMN DI information");
+                        System.out.println("XML length: " + originalXml.length() + " -> " + diagramXml.length());
+                    } catch (Exception e) {
+                        System.err.println("Failed to generate CMMN DI: " + e.getMessage());
+                        e.printStackTrace();
+                        // Continue with original XML (may result in empty diagram)
+                    }
+                } else {
+                    System.out.println("CMMN XML already contains DI element - skipping generation");
                 }
             }
 
