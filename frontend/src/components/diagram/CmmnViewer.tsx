@@ -56,7 +56,7 @@ export function CmmnViewer({
       modelerRef.current = modeler;
 
       // cmmn-js uses event-based API, not Promise-based
-      // We need to listen for the import.parse.complete event
+      // We need to listen for multiple events to ensure rendering is complete
       const importXmlHandler = (event: any) => {
         console.log('CmmnViewer: ===== IMPORT PARSE COMPLETE =====');
         console.log('CmmnViewer: Event error:', event.error);
@@ -67,27 +67,52 @@ export function CmmnViewer({
         }
 
         console.log('CmmnViewer: XML parsed successfully');
+      };
 
-        // Get the canvas to check if diagram was rendered
-        const canvas = modeler.get('canvas');
-        const elementRegistry = modeler.get('elementRegistry');
+      // Wait for render.complete to ensure elements are in the registry
+      const renderCompleteHandler = () => {
+        console.log('CmmnViewer: ===== RENDER COMPLETE =====');
 
-        const allElements = elementRegistry.getAll();
-        console.log('CmmnViewer: Total elements in registry:', allElements.length);
-        console.log('CmmnViewer: All elements:', allElements.map((el: any) => ({ id: el.id, type: el.type, name: el.name })));
+        // Small delay to ensure element registry is fully populated
+        setTimeout(() => {
+          // Get the canvas to check if diagram was rendered
+          const canvas = modeler.get('canvas');
+          const elementRegistry = modeler.get('elementRegistry');
 
-        // Apply overlays for active and completed elements
-        console.log('CmmnViewer: About to apply overlays...');
-        applyOverlays(modeler, activeElementIds, completedElementIds, currentElementId);
+          const allElements = elementRegistry.getAll();
+          console.log('CmmnViewer: Total elements in registry:', allElements.length);
+          console.log('CmmnViewer: All elements:', allElements.map((el: any) => ({
+            id: el.id,
+            type: el.type,
+            name: el.name,
+            businessObject: el.businessObject ? {
+              id: el.businessObject.id,
+              type: el.businessObject.$type,
+              name: el.businessObject.name
+            } : null
+          })));
 
-        // Fit to viewport
-        console.log('CmmnViewer: About to fit to viewport...');
-        canvas.zoom('fit-viewport');
-        console.log('CmmnViewer: ===== DIAGRAM RENDER COMPLETE =====');
+          // Apply overlays for active and completed elements
+          console.log('CmmnViewer: About to apply overlays...');
+          applyOverlays(modeler, activeElementIds, completedElementIds, currentElementId);
+
+          // Fit to viewport
+          console.log('CmmnViewer: About to fit to viewport...');
+          canvas.zoom('fit-viewport');
+          console.log('CmmnViewer: ===== DIAGRAM RENDER COMPLETE =====');
+        }, 100);
       };
 
       // Listen for the import parse complete event
       modeler.on('import.parse.complete', importXmlHandler);
+
+      // Listen for render complete
+      modeler.on('render.renderComplete', renderCompleteHandler);
+      modeler.on('render.done', renderCompleteHandler); // Alternative event name
+
+      // Store handler references for cleanup
+      (modeler as any)._importXmlHandler = importXmlHandler;
+      (modeler as any)._renderCompleteHandler = renderCompleteHandler;
 
       // Import the XML - this is synchronous in cmmn-js
       console.log('CmmnViewer: About to call importXML...');
@@ -119,9 +144,13 @@ export function CmmnViewer({
     return () => {
       console.log('CmmnViewer: Cleanup - destroying modeler');
       if (modelerRef.current) {
-        // Remove event listener
+        // Remove event listeners
         if (modelerRef.current._importXmlHandler) {
           modelerRef.current.off('import.parse.complete', modelerRef.current._importXmlHandler);
+        }
+        if (modelerRef.current._renderCompleteHandler) {
+          modelerRef.current.off('render.renderComplete', modelerRef.current._renderCompleteHandler);
+          modelerRef.current.off('render.done', modelerRef.current._renderCompleteHandler);
         }
         try {
           modelerRef.current.destroy();
