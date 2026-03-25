@@ -21,6 +21,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -401,62 +403,86 @@ public class CaseService {
     }
 
     public DiagramDataDTO getCaseInstanceDiagram(String caseInstanceId) {
-        // Get case instance
-        CaseInstance instance = cmmnRuntimeService.createCaseInstanceQuery()
-                .caseInstanceId(caseInstanceId)
-                .singleResult();
+        try {
+            // Get case instance
+            CaseInstance instance = cmmnRuntimeService.createCaseInstanceQuery()
+                    .caseInstanceId(caseInstanceId)
+                    .singleResult();
 
-        if (instance == null) {
-            return null;
-        }
+            if (instance == null) {
+                return null;
+            }
 
-        // Get case definition
-        CaseDefinition definition = cmmnRepositoryService.createCaseDefinitionQuery()
-                .caseDefinitionId(instance.getCaseDefinitionId())
-                .singleResult();
+            // Get case definition
+            CaseDefinition definition = cmmnRepositoryService.createCaseDefinitionQuery()
+                    .caseDefinitionId(instance.getCaseDefinitionId())
+                    .singleResult();
 
-        if (definition == null) {
-            return null;
-        }
+            if (definition == null) {
+                return null;
+            }
 
-        // Get CMMN model and convert to XML
-        CmmnModel cmmnModel = cmmnRepositoryService.getCmmnModel(definition.getId());
-        CmmnXmlConverter xmlConverter = new CmmnXmlConverter();
-        byte[] xmlBytes = xmlConverter.convertToXML(cmmnModel);
-        String diagramXml = new String(xmlBytes);
+            // Get CMMN XML directly from deployment resources
+            String diagramXml = null;
+            try {
+                InputStream cmmnResourceStream = cmmnRepositoryService.getResourceAsStream(
+                        definition.getDeploymentId(),
+                        definition.getResourceName()
+                );
+                if (cmmnResourceStream != null) {
+                    diagramXml = new String(cmmnResourceStream.readAllBytes(),
+                            StandardCharsets.UTF_8);
+                }
+            } catch (Exception e) {
+                System.err.println("Error fetching CMMN resource: " + e.getMessage());
+                // Fall back to model conversion
+            }
 
-        // Calculate active and completed elements
-        List<String> activeElementIds = new ArrayList<>();
-        List<String> completedElementIds = new ArrayList<>();
-        String currentElementId = null;
+            // If direct resource fetch failed, try model conversion
+            if (diagramXml == null) {
+                CmmnModel cmmnModel = cmmnRepositoryService.getCmmnModel(definition.getId());
+                CmmnXmlConverter xmlConverter = new CmmnXmlConverter();
+                byte[] xmlBytes = xmlConverter.convertToXML(cmmnModel);
+                diagramXml = new String(xmlBytes, StandardCharsets.UTF_8);
+            }
 
-        // Get active plan items (human tasks, stages, milestones currently active)
-        List<PlanItemInstance> activePlanItems = cmmnRuntimeService.createPlanItemInstanceQuery()
-                .caseInstanceId(caseInstanceId)
-                .planItemInstanceStateActive()
-                .list();
+            // Calculate active and completed elements
+            List<String> activeElementIds = new ArrayList<>();
+            List<String> completedElementIds = new ArrayList<>();
+            String currentElementId = null;
 
-        for (PlanItemInstance planItem : activePlanItems) {
-            String elementId = planItem.getElementId(); // Use getElementId instead of getDefinitionId
-            if (elementId != null) {
-                activeElementIds.add(elementId);
-                // Use first active plan item as current element
-                if (currentElementId == null) {
-                    currentElementId = elementId;
+            // Get active plan items (human tasks, stages, milestones currently active)
+            List<PlanItemInstance> activePlanItems = cmmnRuntimeService.createPlanItemInstanceQuery()
+                    .caseInstanceId(caseInstanceId)
+                    .planItemInstanceStateActive()
+                    .list();
+
+            for (PlanItemInstance planItem : activePlanItems) {
+                String elementId = planItem.getElementId(); // Use getElementId instead of getDefinitionId
+                if (elementId != null) {
+                    activeElementIds.add(elementId);
+                    // Use first active plan item as current element
+                    if (currentElementId == null) {
+                        currentElementId = elementId;
+                    }
                 }
             }
+
+            // Note: Historic plan item queries are not available in all Flowable versions
+            // For now, completed elements can be populated later if needed
+
+            // Create diagram data DTO
+            DiagramDataDTO diagramData = new DiagramDataDTO();
+            diagramData.setDiagramXml(diagramXml);
+            diagramData.setActiveElementIds(activeElementIds);
+            diagramData.setCompletedElementIds(completedElementIds);
+            diagramData.setCurrentElementId(currentElementId);
+
+            return diagramData;
+        } catch (Exception e) {
+            System.err.println("Error generating CMMN diagram: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error writing CMMN XML: " + e.getMessage(), e);
         }
-
-        // Note: Historic plan item queries are not available in all Flowable versions
-        // For now, completed elements can be populated later if needed
-
-        // Create diagram data DTO
-        DiagramDataDTO diagramData = new DiagramDataDTO();
-        diagramData.setDiagramXml(diagramXml);
-        diagramData.setActiveElementIds(activeElementIds);
-        diagramData.setCompletedElementIds(completedElementIds);
-        diagramData.setCurrentElementId(currentElementId);
-
-        return diagramData;
     }
 }

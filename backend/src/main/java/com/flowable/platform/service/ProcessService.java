@@ -15,6 +15,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -250,29 +252,48 @@ public class ProcessService {
     }
 
     public DiagramDataDTO getProcessInstanceDiagram(String processInstanceId) {
-        // Get process instance
-        ProcessInstance instance = runtimeService.createProcessInstanceQuery()
-                .processInstanceId(processInstanceId)
-                .singleResult();
+        try {
+            // Get process instance
+            ProcessInstance instance = runtimeService.createProcessInstanceQuery()
+                    .processInstanceId(processInstanceId)
+                    .singleResult();
 
-        if (instance == null) {
-            return null;
-        }
+            if (instance == null) {
+                return null;
+            }
 
-        // Get process definition
-        ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
-                .processDefinitionId(instance.getProcessDefinitionId())
-                .singleResult();
+            // Get process definition
+            ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
+                    .processDefinitionId(instance.getProcessDefinitionId())
+                    .singleResult();
 
-        if (definition == null) {
-            return null;
-        }
+            if (definition == null) {
+                return null;
+            }
 
-        // Get BPMN model and convert to XML
-        BpmnModel bpmnModel = repositoryService.getBpmnModel(definition.getId());
-        BpmnXMLConverter xmlConverter = new BpmnXMLConverter();
-        byte[] xmlBytes = xmlConverter.convertToXML(bpmnModel);
-        String diagramXml = new String(xmlBytes);
+            // Get BPMN XML directly from deployment resources
+            String diagramXml = null;
+            try {
+                InputStream bpmnResourceStream = repositoryService.getResourceAsStream(
+                        definition.getDeploymentId(),
+                        definition.getResourceName()
+                );
+                if (bpmnResourceStream != null) {
+                    diagramXml = new String(bpmnResourceStream.readAllBytes(),
+                            java.nio.charset.StandardCharsets.UTF_8);
+                }
+            } catch (Exception e) {
+                System.err.println("Error fetching BPMN resource: " + e.getMessage());
+                // Fall back to model conversion
+            }
+
+            // If direct resource fetch failed, try model conversion
+            if (diagramXml == null) {
+                BpmnModel bpmnModel = repositoryService.getBpmnModel(definition.getId());
+                BpmnXMLConverter xmlConverter = new BpmnXMLConverter();
+                byte[] xmlBytes = xmlConverter.convertToXML(bpmnModel);
+                diagramXml = new String(xmlBytes, java.nio.charset.StandardCharsets.UTF_8);
+            }
 
         // Calculate active and completed elements
         List<String> activeElementIds = new ArrayList<>();
@@ -329,5 +350,10 @@ public class ProcessService {
         diagramData.setCurrentElementId(currentElementId);
 
         return diagramData;
+        } catch (Exception e) {
+            System.err.println("Error generating BPMN diagram: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error writing BPMN XML: " + e.getMessage(), e);
+        }
     }
 }
