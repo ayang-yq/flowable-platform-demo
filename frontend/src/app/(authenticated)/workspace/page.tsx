@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import InstanceTable from '@/components/workspace/InstanceTable';
 import SummaryCards from '@/components/workspace/SummaryCards';

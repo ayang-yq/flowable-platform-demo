@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Modeler from 'cmmn-js/lib/Modeler';
-import { DiagramViewer } from './DiagramViewer';
+import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 
 interface CmmnViewerProps {
   xml?: string;
@@ -25,6 +25,7 @@ export function CmmnViewer({
 }: CmmnViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<Modeler | null>(null);
+  const [zoom, setZoom] = useState(1);
 
   // Initialize CMMN modeler
   useEffect(() => {
@@ -66,15 +67,89 @@ export function CmmnViewer({
     applyOverlays(modelerRef.current, activeElementIds, completedElementIds, currentElementId);
   }, [activeElementIds, completedElementIds, currentElementId]);
 
+  const handleZoomIn = () => {
+    const newZoom = Math.min(zoom + 0.25, 3);
+    setZoom(newZoom);
+    if (modelerRef.current) {
+      (modelerRef.current.get('canvas') as any).zoom('fit-viewport', newZoom);
+    }
+  };
+
+  const handleZoomOut = () => {
+    const newZoom = Math.max(zoom - 0.25, 0.5);
+    setZoom(newZoom);
+    if (modelerRef.current) {
+      (modelerRef.current.get('canvas') as any).zoom('fit-viewport', newZoom);
+    }
+  };
+
+  const handleFitToScreen = () => {
+    setZoom(1);
+    if (modelerRef.current) {
+      (modelerRef.current.get('canvas') as any).zoom('fit-viewport');
+    }
+  };
+
   return (
-    <DiagramViewer
-      xml={xml}
-      loading={loading}
-      error={error}
-      className={className}
-    >
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-    </DiagramViewer>
+    <div className={`diagram-viewer relative ${className}`}>
+      {/* Loading State */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="mt-2 text-sm text-gray-600">Loading diagram...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+          <div className="text-center">
+            <p className="text-red-600 font-medium">Unable to load diagram</p>
+            <p className="text-sm text-gray-600 mt-1">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Zoom Controls */}
+      {!loading && !error && (
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          <button
+            onClick={handleZoomOut}
+            className="p-2 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+            title="Zoom out"
+            disabled={zoom <= 0.5}
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+          <span className="p-2 bg-white border border-gray-300 rounded text-sm font-medium">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            onClick={handleZoomIn}
+            className="p-2 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+            title="Zoom in"
+            disabled={zoom >= 3}
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleFitToScreen}
+            className="p-2 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+            title="Fit to screen"
+          >
+            <Maximize className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Diagram Container */}
+      <div
+        ref={containerRef}
+        style={{ width: '100%', height: '400px', backgroundColor: '#ffffff' }}
+      />
+    </div>
   );
 }
 

@@ -91,6 +91,7 @@ export default function InstanceDetailPage() {
       setDiagramLoading(true);
       setDiagramError(null);
       try {
+        console.log('Fetching diagram for instance:', id, 'type:', type);
         let data: DiagramData;
         if (type === 'BPMN') {
           data = await apiClient.getProcessInstanceDiagram(id);
@@ -99,6 +100,12 @@ export default function InstanceDetailPage() {
         } else {
           return; // DMN doesn't have diagrams
         }
+        console.log('Diagram data received:', {
+          hasXml: !!data.diagramXml,
+          xmlLength: data.diagramXml?.length,
+          activeCount: data.activeElementIds?.length,
+          completedCount: data.completedElementIds?.length
+        });
         setDiagramData(data);
       } catch (err) {
         setDiagramError('Failed to load diagram');
