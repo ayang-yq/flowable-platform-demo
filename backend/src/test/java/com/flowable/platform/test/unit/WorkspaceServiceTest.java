@@ -16,6 +16,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.*;
 
@@ -39,12 +42,16 @@ class WorkspaceServiceTest extends AbstractUnitTest {
         try (MockedStatic<MultiTenantFilter> mocked = mockStatic(MultiTenantFilter.class)) {
             mocked.when(MultiTenantFilter::getCurrentTenantId).thenReturn("tenant-1");
 
-            // Mock BPMN definitions
-            ProcessDefinitionQuery bpmnQuery = mock(ProcessDefinitionQuery.class);
-            when(repositoryService.createProcessDefinitionQuery()).thenReturn(bpmnQuery);
-            when(bpmnQuery.latestVersion()).thenReturn(bpmnQuery);
-            when(bpmnQuery.processDefinitionTenantId("tenant-1")).thenReturn(bpmnQuery);
-            when(bpmnQuery.list()).thenReturn(Collections.emptyList());
+            // Mock BPMN definitions - two queries: tenant-specific and global
+            ProcessDefinitionQuery bpmnTenantQuery = mock(ProcessDefinitionQuery.class);
+            ProcessDefinitionQuery bpmnGlobalQuery = mock(ProcessDefinitionQuery.class);
+            when(repositoryService.createProcessDefinitionQuery()).thenReturn(bpmnTenantQuery, bpmnGlobalQuery);
+            when(bpmnTenantQuery.processDefinitionTenantId("tenant-1")).thenReturn(bpmnTenantQuery);
+            when(bpmnTenantQuery.latestVersion()).thenReturn(bpmnTenantQuery);
+            when(bpmnTenantQuery.list()).thenReturn(Collections.emptyList());
+            when(bpmnGlobalQuery.processDefinitionTenantId("")).thenReturn(bpmnGlobalQuery);
+            when(bpmnGlobalQuery.latestVersion()).thenReturn(bpmnGlobalQuery);
+            when(bpmnGlobalQuery.list()).thenReturn(Collections.emptyList());
 
             // Mock CMMN definitions
             List<DefinitionDTO> cmmnDefs = List.of(
@@ -86,10 +93,13 @@ class WorkspaceServiceTest extends AbstractUnitTest {
         try (MockedStatic<MultiTenantFilter> mocked = mockStatic(MultiTenantFilter.class)) {
             mocked.when(MultiTenantFilter::getCurrentTenantId).thenReturn("tenant-1");
 
-            // Mock BPMN active instances
+            // Mock BPMN active instances with or()/endOr() chain
             ProcessInstanceQuery bpmnQuery = mock(ProcessInstanceQuery.class);
             when(runtimeService.createProcessInstanceQuery()).thenReturn(bpmnQuery);
+            when(bpmnQuery.or()).thenReturn(bpmnQuery);
             when(bpmnQuery.processInstanceTenantId("tenant-1")).thenReturn(bpmnQuery);
+            when(bpmnQuery.processInstanceTenantId("")).thenReturn(bpmnQuery);
+            when(bpmnQuery.endOr()).thenReturn(bpmnQuery);
             when(bpmnQuery.orderByProcessInstanceId()).thenReturn(bpmnQuery);
             when(bpmnQuery.desc()).thenReturn(bpmnQuery);
             when(bpmnQuery.listPage(0, 20)).thenReturn(Collections.emptyList());
@@ -110,37 +120,67 @@ class WorkspaceServiceTest extends AbstractUnitTest {
 
     @Test
     void getDashboardSummary_correctCounts() {
-        try (MockedStatic<MultiTenantFilter> mocked = mockStatic(MultiTenantFilter.class)) {
+        try (MockedStatic<MultiTenantFilter> mocked = mockStatic(MultiTenantFilter.class);
+             MockedStatic<SecurityContextHolder> securityMock = mockStatic(SecurityContextHolder.class)) {
             mocked.when(MultiTenantFilter::getCurrentTenantId).thenReturn("tenant-1");
 
-            // Active BPMN
-            ProcessInstanceQuery activeQuery = mock(ProcessInstanceQuery.class);
-            when(runtimeService.createProcessInstanceQuery()).thenReturn(activeQuery);
-            when(activeQuery.processInstanceTenantId("tenant-1")).thenReturn(activeQuery);
-            when(activeQuery.startedBy(anyString())).thenReturn(activeQuery);
-            when(activeQuery.count()).thenReturn(3L);
+            SecurityContext securityContext = mock(SecurityContext.class);
+            Authentication auth = mock(Authentication.class);
+            when(securityContext.getAuthentication()).thenReturn(auth);
+            when(auth.getName()).thenReturn("testuser");
+            securityMock.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+
+            // Active BPMN - countActiveBpmnInstances(null)
+            ProcessInstanceQuery activeQueryNull = mock(ProcessInstanceQuery.class);
+            when(activeQueryNull.or()).thenReturn(activeQueryNull);
+            when(activeQueryNull.processInstanceTenantId("tenant-1")).thenReturn(activeQueryNull);
+            when(activeQueryNull.processInstanceTenantId("")).thenReturn(activeQueryNull);
+            when(activeQueryNull.endOr()).thenReturn(activeQueryNull);
+            when(activeQueryNull.count()).thenReturn(3L);
 
             // Active CMMN
-            when(caseService.countActiveCaseInstances(isNull())).thenReturn(2L);
-            when(caseService.countActiveCaseInstances(anyString())).thenReturn(1L);
+            when(caseService.countActiveCaseInstances(null)).thenReturn(2L);
 
             // Completed BPMN
             HistoricProcessInstanceQuery histQuery = mock(HistoricProcessInstanceQuery.class);
-            when(historyService.createHistoricProcessInstanceQuery()).thenReturn(histQuery);
             when(histQuery.finished()).thenReturn(histQuery);
+            when(histQuery.or()).thenReturn(histQuery);
             when(histQuery.processInstanceTenantId("tenant-1")).thenReturn(histQuery);
-            when(histQuery.startedAfter(any())).thenReturn(histQuery);
+            when(histQuery.processInstanceTenantId("")).thenReturn(histQuery);
+            when(histQuery.endOr()).thenReturn(histQuery);
             when(histQuery.count()).thenReturn(10L);
 
             // Completed CMMN
             when(caseService.countCompletedCaseInstances()).thenReturn(5L);
 
+            // My active BPMN - countActiveBpmnInstances("testuser")
+            ProcessInstanceQuery myActiveQuery = mock(ProcessInstanceQuery.class);
+            when(myActiveQuery.or()).thenReturn(myActiveQuery);
+            when(myActiveQuery.processInstanceTenantId("tenant-1")).thenReturn(myActiveQuery);
+            when(myActiveQuery.processInstanceTenantId("")).thenReturn(myActiveQuery);
+            when(myActiveQuery.endOr()).thenReturn(myActiveQuery);
+            when(myActiveQuery.startedBy("testuser")).thenReturn(myActiveQuery);
+            when(myActiveQuery.count()).thenReturn(1L);
+
+            // Sequential returns: first call -> activeQueryNull, second call -> myActiveQuery
+            when(runtimeService.createProcessInstanceQuery()).thenReturn(activeQueryNull, myActiveQuery);
+
+            // Sequential returns for historyService: completed + started today
+            HistoricProcessInstanceQuery todayQuery = mock(HistoricProcessInstanceQuery.class);
+            when(todayQuery.startedAfter(any())).thenReturn(todayQuery);
+            when(todayQuery.count()).thenReturn(2L);
+            when(historyService.createHistoricProcessInstanceQuery()).thenReturn(histQuery, todayQuery);
+
+            // My active CMMN
+            when(caseService.countActiveCaseInstances("testuser")).thenReturn(1L);
+
             DashboardSummaryDTO result = workspaceService.getDashboardSummary();
 
             assertNotNull(result);
-            // Note: exact counts depend on mock interaction order
-            assertTrue(result.getActiveCount() >= 0);
-            assertTrue(result.getCompletedCount() >= 0);
+            assertEquals(5L, result.getActiveCount());      // 3 BPMN + 2 CMMN
+            assertEquals(15L, result.getCompletedCount());   // 10 BPMN + 5 CMMN
+            assertEquals(2L, result.getStartedTodayCount()); // 2 BPMN today
+            assertEquals(2L, result.getMyActiveCount());     // 1 BPMN + 1 CMMN
         }
     }
 }

@@ -436,35 +436,16 @@ public class CaseService {
                 diagramXml = new String(xmlBytes, StandardCharsets.UTF_8);
 
                 // Generate CMMN DI if missing (required by cmmn-js for rendering)
-                // Check for actual <cmmndi:CMMNDI> ELEMENT, not just namespace declaration
-                // The namespace URL contains "CMMNDI>" which can fool simple contains() checks
-                boolean hasCMMNDIElement = false;
-                int cmmndiStart = diagramXml.indexOf("<cmmndi:CMMNDI");
-                if (cmmndiStart >= 0) {
-                    // Find the closing > to verify it's an element, not part of a namespace URL
-                    int cmmndiEnd = diagramXml.indexOf(">", cmmndiStart);
-                    if (cmmndiEnd > cmmndiStart) {
-                        String potentialElement = diagramXml.substring(cmmndiStart, cmmndiEnd + 1);
-                        // It's an element if it doesn't contain "xmlns" (namespace declarations have xmlns)
-                        hasCMMNDIElement = !potentialElement.contains("xmlns");
-                    }
-                }
+                // Check for actual CMMNShape elements — the converter may produce an empty
+                // <cmmndi:CMMNDI><cmmndi:CMMNDiagram/></cmmndi:CMMNDI> wrapper with no shapes
+                boolean hasShapes = diagramXml.contains("<cmmndi:CMMNShape");
 
-                if (diagramXml != null && !hasCMMNDIElement) {
-                    System.out.println("CMMN XML missing DI element - generating auto-layout");
-                    System.out.println("Current XML length: " + diagramXml.length());
+                if (diagramXml != null && !hasShapes) {
                     try {
-                        String originalXml = diagramXml;
                         diagramXml = CmmnDiGenerator.addDiInformation(diagramXml);
-                        System.out.println("Successfully generated CMMN DI information");
-                        System.out.println("XML length: " + originalXml.length() + " -> " + diagramXml.length());
                     } catch (Exception e) {
-                        System.err.println("Failed to generate CMMN DI: " + e.getMessage());
-                        e.printStackTrace();
                         // Continue with original XML (may result in empty diagram)
                     }
-                } else {
-                    System.out.println("CMMN XML already contains DI element - skipping generation");
                 }
             }
 
@@ -480,7 +461,7 @@ public class CaseService {
                                 StandardCharsets.UTF_8);
                     }
                 } catch (Exception e) {
-                    System.err.println("Error fetching CMMN resource: " + e.getMessage());
+                    // Continue with model-converted XML
                 }
             }
 
@@ -495,17 +476,9 @@ public class CaseService {
                     .planItemInstanceStateActive()
                     .list();
 
-            System.out.println("=== DEBUG CMMN Diagram ===");
-            System.out.println("Active plan items count: " + activePlanItems.size());
-
             for (PlanItemInstance planItem : activePlanItems) {
                 String elementId = planItem.getElementId();
                 String planItemId = planItem.getId();
-                String name = planItem.getName();
-
-                System.out.println("PlanItem: " + name);
-                System.out.println("  ID: " + planItemId);
-                System.out.println("  ElementId (definition): " + elementId);
 
                 // Add both planItem ID and element ID to handle both cases
                 if (planItemId != null) {
@@ -521,8 +494,6 @@ public class CaseService {
                 }
             }
 
-            System.out.println("Active element IDs: " + activeElementIds);
-
             // Note: Historic plan item queries are not available in all Flowable versions
             // For now, completed elements can be populated later if needed
 
@@ -535,8 +506,6 @@ public class CaseService {
 
             return diagramData;
         } catch (Exception e) {
-            System.err.println("Error generating CMMN diagram: " + e.getMessage());
-            e.printStackTrace();
             throw new RuntimeException("Error writing CMMN XML: " + e.getMessage(), e);
         }
     }

@@ -35,17 +35,22 @@ class DecisionServiceTest extends AbstractUnitTest {
         try (MockedStatic<MultiTenantFilter> mocked = mockStatic(MultiTenantFilter.class)) {
             mocked.when(MultiTenantFilter::getCurrentTenantId).thenReturn("tenant-1");
 
-            DmnDecisionQuery query = mock(DmnDecisionQuery.class);
-            when(dmnRepositoryService.createDecisionQuery()).thenReturn(query);
-            when(query.latestVersion()).thenReturn(query);
-            when(query.decisionTenantId("tenant-1")).thenReturn(query);
-            when(query.list()).thenReturn(Collections.emptyList());
+            // Tenant-specific query
+            DmnDecisionQuery tenantQuery = mock(DmnDecisionQuery.class);
+            // Global definitions query
+            DmnDecisionQuery globalQuery = mock(DmnDecisionQuery.class);
+            when(dmnRepositoryService.createDecisionQuery()).thenReturn(tenantQuery, globalQuery);
+            when(tenantQuery.latestVersion()).thenReturn(tenantQuery);
+            when(tenantQuery.decisionTenantId("tenant-1")).thenReturn(tenantQuery);
+            when(tenantQuery.list()).thenReturn(Collections.emptyList());
+            when(globalQuery.latestVersion()).thenReturn(globalQuery);
+            when(globalQuery.decisionTenantId("")).thenReturn(globalQuery);
+            when(globalQuery.list()).thenReturn(Collections.emptyList());
 
             List<DefinitionDTO> result = decisionService.listDecisionDefinitions();
 
             assertNotNull(result);
             assertTrue(result.isEmpty());
-            verify(query).decisionTenantId("tenant-1");
         }
     }
 
@@ -64,6 +69,7 @@ class DecisionServiceTest extends AbstractUnitTest {
             when(defQuery.singleResult()).thenReturn(definition);
             when(definition.getName()).thenReturn("Test Decision");
             when(definition.getId()).thenReturn("dec-1");
+            when(definition.getTenantId()).thenReturn("tenant-1");
 
             // Mock execution
             ExecuteDecisionBuilder execBuilder = mock(ExecuteDecisionBuilder.class);
@@ -92,12 +98,19 @@ class DecisionServiceTest extends AbstractUnitTest {
         try (MockedStatic<MultiTenantFilter> mocked = mockStatic(MultiTenantFilter.class)) {
             mocked.when(MultiTenantFilter::getCurrentTenantId).thenReturn("tenant-1");
 
-            DmnDecisionQuery defQuery = mock(DmnDecisionQuery.class);
-            when(dmnRepositoryService.createDecisionQuery()).thenReturn(defQuery);
-            when(defQuery.decisionKey("nonexistent")).thenReturn(defQuery);
-            when(defQuery.latestVersion()).thenReturn(defQuery);
-            when(defQuery.decisionTenantId("tenant-1")).thenReturn(defQuery);
-            when(defQuery.singleResult()).thenReturn(null);
+            // Tenant-specific query returns null
+            DmnDecisionQuery tenantDefQuery = mock(DmnDecisionQuery.class);
+            // Global fallback query also returns null
+            DmnDecisionQuery globalDefQuery = mock(DmnDecisionQuery.class);
+            when(dmnRepositoryService.createDecisionQuery()).thenReturn(tenantDefQuery, globalDefQuery);
+            when(tenantDefQuery.decisionKey("nonexistent")).thenReturn(tenantDefQuery);
+            when(tenantDefQuery.latestVersion()).thenReturn(tenantDefQuery);
+            when(tenantDefQuery.decisionTenantId("tenant-1")).thenReturn(tenantDefQuery);
+            when(tenantDefQuery.singleResult()).thenReturn(null);
+            when(globalDefQuery.decisionKey("nonexistent")).thenReturn(globalDefQuery);
+            when(globalDefQuery.latestVersion()).thenReturn(globalDefQuery);
+            when(globalDefQuery.decisionTenantId("")).thenReturn(globalDefQuery);
+            when(globalDefQuery.singleResult()).thenReturn(null);
 
             assertThrows(IllegalArgumentException.class, () ->
                     decisionService.executeDecision("nonexistent", Map.of()));

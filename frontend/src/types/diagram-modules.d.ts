@@ -4,10 +4,9 @@ declare module 'bpmn-js/lib/Modeler' {
 }
 
 declare module 'cmmn-js/lib/Modeler' {
-  interface CmmnModeler {
+  const CmmnModeler: {
     new(options: any): any;
     prototype: any;
-  }
-  const CmmnModeler: CmmnModeler;
-  export = CmmnModeler;
+  };
+  export default CmmnModeler;
 }

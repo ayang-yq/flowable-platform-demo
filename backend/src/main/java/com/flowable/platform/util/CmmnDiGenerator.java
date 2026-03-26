@@ -2,6 +2,8 @@ package com.flowable.platform.util;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -25,14 +27,19 @@ import java.util.List;
  */
 public class CmmnDiGenerator {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CmmnDiGenerator.class);
+
+    private static final String CMMNDI_NS = "http://www.omg.org/spec/CMMN/20151109/CMMNDI";
+    private static final String DC_NS = "http://www.omg.org/spec/CMMN/20151109/DC";
+
     /**
      * Add minimal CMMN DI information to a CMMN XML string.
      * <p>
-     * This method parses the CMMN XML, identifies plan items and tasks,
-     * and generates basic shape bounds with a simple vertical layout.
+     * If the XML already has CMMNShape elements, returns as-is.
+     * Otherwise removes any existing empty CMMNDI and generates shapes.
      *
-     * @param cmmnXml The original CMMN XML (may lack DI)
-     * @return CMMN XML with added CMMN DI information
+     * @param cmmnXml The original CMMN XML (may lack DI or have empty DI)
+     * @return CMMN XML with CMMN DI information including shape bounds
      * @throws Exception if XML parsing or manipulation fails
      */
     public static String addDiInformation(String cmmnXml) throws Exception {
@@ -40,16 +47,10 @@ public class CmmnDiGenerator {
             throw new IllegalArgumentException("CMMN XML cannot be null or empty");
         }
 
-        // If DI already exists (actual element, not just namespace declaration), return as-is
-        // Check for actual CMMNDI element or DI element (complete tags with >)
-        boolean hasCMMNDI = cmmnXml.indexOf("<cmmndi:CMMNDI>") >= 0 && cmmnXml.indexOf(">", cmmnXml.indexOf("<cmmndi:CMMNDI")) > cmmnXml.indexOf("<cmmndi:CMMNDI");
-        boolean hasDI = cmmnXml.indexOf("<cmmndi:DI ") >= 0 && cmmnXml.indexOf(">", cmmnXml.indexOf("<cmmndi:DI ")) > cmmnXml.indexOf("<cmmndi:DI ");
-
-        if (hasCMMNDI || hasDI) {
-            System.out.println("CmmnDiGenerator: DI element already exists, skipping generation");
+        // If actual shape data already exists, return as-is
+        if (cmmnXml.contains("<cmmndi:CMMNShape")) {
             return cmmnXml;
         }
-        System.out.println("CmmnDiGenerator: No DI element found, proceeding with generation");
 
         // Parse XML
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -57,12 +58,19 @@ public class CmmnDiGenerator {
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document document = builder.parse(new org.xml.sax.InputSource(new StringReader(cmmnXml)));
 
-        // Get or create CMMNDI namespace
         Element definitionsElement = document.getDocumentElement();
+
+        // Remove any existing empty CMMNDI element
+        NodeList existing = document.getElementsByTagNameNS(CMMNDI_NS, "CMMNDI");
+        for (int i = 0; i < existing.getLength(); i++) {
+            definitionsElement.removeChild(existing.item(i));
+        }
+
+        // Ensure namespaces
         String cmmnNs = definitionsElement.getAttribute("xmlns");
-        String dcNs = ensureNamespace(definitionsElement, "xmlns:dc", "http://www.omg.org/spec/CMMN/20151109/DC");
-        String diNs = ensureNamespace(definitionsElement, "xmlns:di", "http://www.omg.org/spec/CMMN/20151109/DI");
-        String cmmndiNs = ensureNamespace(definitionsElement, "xmlns:cmmndi", "http://www.omg.org/spec/CMMN/20151109/CMMNDI");
+        ensureNamespace(definitionsElement, "xmlns:dc", DC_NS);
+        ensureNamespace(definitionsElement, "xmlns:di", "http://www.omg.org/spec/CMMN/20151109/DI");
+        ensureNamespace(definitionsElement, "xmlns:cmmndi", CMMNDI_NS);
 
         // Find case element
         XPath xPath = XPathFactory.newInstance().newXPath();
@@ -73,84 +81,63 @@ public class CmmnDiGenerator {
         );
 
         if (caseElement == null) {
-            System.err.println("CmmnDiGenerator: No case element found, cannot add DI");
+            log.warn("No case element found in CMMN XML, cannot add DI");
             return cmmnXml;
         }
 
         // Collect all plan items
         List<Element> planItems = new ArrayList<>();
-        org.w3c.dom.NodeList children = caseElement.getElementsByTagNameNS(cmmnNs, "planItem");
+        NodeList children = caseElement.getElementsByTagNameNS(cmmnNs, "planItem");
         for (int i = 0; i < children.getLength(); i++) {
             planItems.add((Element) children.item(i));
         }
 
         if (planItems.isEmpty()) {
-            System.err.println("CmmnDiGenerator: No plan items found, nothing to layout");
+            log.warn("No plan items found in CMMN XML, nothing to layout");
             return cmmnXml;
         }
 
         // Create CMMNDI structure
-        Element cmmndi = document.createElementNS(cmmndiNs, "cmmndi:CMMNDI");
-        Element cmmnDiagram = document.createElementNS(cmmndiNs, "cmmndi:CMMNDiagram");
-        cmmnDiagram.setAttribute("id", "CMMNDiagram_" + System.currentTimeMillis());
+        Element cmmndi = document.createElementNS(CMMNDI_NS, "cmmndi:CMMNDI");
+        Element cmmnDiagram = document.createElementNS(CMMNDI_NS, "cmmndi:CMMNDiagram");
+        cmmnDiagram.setAttribute("id", "CMMNDiagram_" + caseElement.getAttribute("id"));
         cmmnDiagram.setAttribute("cmmnElementRef", caseElement.getAttribute("id"));
 
-        // Calculate dimensions
-        int elementHeight = 80;
-        int elementWidth = 100;
+        // Layout params
+        int elementWidth = 160;
+        int elementHeight = 100;
         int verticalGap = 40;
-        int horizontalGap = 40;
-        int startX = 50;
-        int startY = 50;
-
-        int maxElementsPerRow = 3;
-        int totalWidth = Math.min(planItems.size(), maxElementsPerRow) * (elementWidth + horizontalGap) + startX;
-        int totalHeight = ((planItems.size() + maxElementsPerRow - 1) / maxElementsPerRow) * (elementHeight + verticalGap) + startY;
-
-        // Set diagram bounds
-        cmmnDiagram.setAttribute("dc:bounds", String.format("%d,%d,%d,%d", startX, startY, totalWidth, totalHeight));
+        int startX = 100;
+        int startY = 80;
 
         // Create shapes for each plan item
-        int currentX = startX;
         int currentY = startY;
-        int itemsInRow = 0;
-
         for (Element planItem : planItems) {
             String planItemId = planItem.getAttribute("id");
             if (planItemId == null || planItemId.isEmpty()) {
                 continue;
             }
 
-            // Create CMMNShape
-            Element shape = document.createElementNS(cmmndiNs, "cmmndi:CMMNShape");
+            Element shape = document.createElementNS(CMMNDI_NS, "cmmndi:CMMNShape");
             shape.setAttribute("id", "CMMNShape_" + planItemId);
             shape.setAttribute("cmmnElementRef", planItemId);
 
-            // Set bounds
-            String bounds = String.format("%d,%d,%d,%d", currentX, currentY, elementWidth, elementHeight);
-            Element boundsElement = document.createElementNS(dcNs, "dc:Bounds");
-            boundsElement.setAttribute("x", String.valueOf(currentX));
+            Element boundsElement = document.createElementNS(DC_NS, "dc:Bounds");
+            boundsElement.setAttribute("x", String.valueOf(startX));
             boundsElement.setAttribute("y", String.valueOf(currentY));
             boundsElement.setAttribute("width", String.valueOf(elementWidth));
             boundsElement.setAttribute("height", String.valueOf(elementHeight));
-
             shape.appendChild(boundsElement);
-            cmmnDiagram.appendChild(shape);
 
-            // Move to next position
-            itemsInRow++;
-            if (itemsInRow >= maxElementsPerRow) {
-                currentX = startX;
-                currentY += elementHeight + verticalGap;
-                itemsInRow = 0;
-            } else {
-                currentX += elementWidth + horizontalGap;
-            }
+            // CMMNLabel is required by the CMMN DI schema inside CMMNShape
+            Element label = document.createElementNS(CMMNDI_NS, "cmmndi:CMMNLabel");
+            shape.appendChild(label);
+
+            cmmnDiagram.appendChild(shape);
+            currentY += elementHeight + verticalGap;
         }
 
         cmmndi.appendChild(cmmnDiagram);
-
-        // Append CMMNDI to definitions
         definitionsElement.appendChild(cmmndi);
 
         // Serialize back to XML

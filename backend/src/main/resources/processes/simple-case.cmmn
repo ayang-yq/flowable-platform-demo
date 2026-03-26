@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL"
              xmlns:flowable="http://flowable.org/cmmn"
+             xmlns:cmmndi="http://www.omg.org/spec/CMMN/20151109/CMMNDI"
+             xmlns:dc="http://www.omg.org/spec/CMMN/20151109/DC"
+             xmlns:di="http://www.omg.org/spec/CMMN/20151109/DI"
              targetNamespace="http://flowable.org/cmmn">
 
   <case id="simpleCase" name="Simple Case">
@@ -11,5 +14,18 @@
       <milestone id="milestone" name="Case Completed"/>
     </casePlanModel>
   </case>
+
+  <cmmndi:CMMNDI>
+    <cmmndi:CMMNDiagram id="CMMNDiagram_simpleCase" cmmnElementRef="casePlanModel">
+      <cmmndi:CMMNShape id="CMMNShape_planItemHumanTask" cmmnElementRef="planItemHumanTask">
+        <dc:Bounds x="100" y="80" width="160" height="100"/>
+        <cmmndi:CMMNLabel/>
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="CMMNShape_planItemMilestone" cmmnElementRef="planItemMilestone">
+        <dc:Bounds x="100" y="260" width="160" height="80"/>
+        <cmmndi:CMMNLabel/>
+      </cmmndi:CMMNShape>
+    </cmmndi:CMMNDiagram>
+  </cmmndi:CMMNDI>
 
 </definitions>

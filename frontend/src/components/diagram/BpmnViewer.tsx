@@ -98,11 +98,6 @@ export function BpmnViewer({
 
   return (
     <div className={`diagram-viewer relative ${className}`}>
-      {/* Debug Info */}
-      <div className="absolute bottom-2 left-2 z-20 bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-        BPMN Viewer | XML: {xml ? `${xml.length} chars` : 'none'} | Active: {activeElementIds.length}
-      </div>
-
       {/* Loading State */}
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">

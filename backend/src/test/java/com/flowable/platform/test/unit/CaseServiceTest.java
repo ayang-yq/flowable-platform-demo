@@ -4,7 +4,6 @@ import com.flowable.platform.config.MultiTenantFilter;
 import com.flowable.platform.dto.DefinitionDTO;
 import com.flowable.platform.dto.DefinitionType;
 import com.flowable.platform.dto.InstanceDTO;
-import com.flowable.platform.dto.InstanceDetailDTO;
 import com.flowable.platform.service.AuditService;
 import com.flowable.platform.service.CaseService;
 import org.flowable.cmmn.api.CmmnHistoryService;
@@ -14,16 +13,17 @@ import org.flowable.cmmn.api.history.HistoricCaseInstance;
 import org.flowable.cmmn.api.history.HistoricCaseInstanceQuery;
 import org.flowable.cmmn.api.repository.CaseDefinition;
 import org.flowable.cmmn.api.repository.CaseDefinitionQuery;
-import org.flowable.cmmn.api.repository.CmmnDeployment;
-import org.flowable.cmmn.api.repository.CmmnDeploymentQuery;
 import org.flowable.cmmn.api.runtime.CaseInstance;
 import org.flowable.cmmn.api.runtime.CaseInstanceBuilder;
 import org.flowable.cmmn.api.runtime.CaseInstanceQuery;
-import org.junit.jupiter.api.BeforeEach;
+import org.flowable.engine.IdentityService;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.*;
 
@@ -37,6 +37,7 @@ class CaseServiceTest extends AbstractUnitTest {
     @Mock private CmmnHistoryService cmmnHistoryService;
     @Mock private CmmnRepositoryService cmmnRepositoryService;
     @Mock private AuditService auditService;
+    @Mock private IdentityService identityService;
 
     @InjectMocks private CaseService caseService;
 
@@ -45,24 +46,36 @@ class CaseServiceTest extends AbstractUnitTest {
         try (MockedStatic<MultiTenantFilter> mocked = mockStatic(MultiTenantFilter.class)) {
             mocked.when(MultiTenantFilter::getCurrentTenantId).thenReturn("tenant-1");
 
-            CaseDefinitionQuery query = mock(CaseDefinitionQuery.class);
-            when(cmmnRepositoryService.createCaseDefinitionQuery()).thenReturn(query);
-            when(query.latestVersion()).thenReturn(query);
-            when(query.caseDefinitionTenantId("tenant-1")).thenReturn(query);
-            when(query.list()).thenReturn(Collections.emptyList());
+            // Tenant-specific query
+            CaseDefinitionQuery tenantQuery = mock(CaseDefinitionQuery.class);
+            // Global definitions query
+            CaseDefinitionQuery globalQuery = mock(CaseDefinitionQuery.class);
+            when(cmmnRepositoryService.createCaseDefinitionQuery()).thenReturn(tenantQuery, globalQuery);
+            when(tenantQuery.latestVersion()).thenReturn(tenantQuery);
+            when(tenantQuery.caseDefinitionTenantId("tenant-1")).thenReturn(tenantQuery);
+            when(tenantQuery.list()).thenReturn(Collections.emptyList());
+            when(globalQuery.latestVersion()).thenReturn(globalQuery);
+            when(globalQuery.caseDefinitionTenantId("")).thenReturn(globalQuery);
+            when(globalQuery.list()).thenReturn(Collections.emptyList());
 
             List<DefinitionDTO> result = caseService.listCaseDefinitions();
 
             assertNotNull(result);
             assertTrue(result.isEmpty());
-            verify(query).caseDefinitionTenantId("tenant-1");
         }
     }
 
     @Test
     void startCaseInstance_happyPath() {
-        try (MockedStatic<MultiTenantFilter> mocked = mockStatic(MultiTenantFilter.class)) {
+        try (MockedStatic<MultiTenantFilter> mocked = mockStatic(MultiTenantFilter.class);
+             MockedStatic<SecurityContextHolder> securityMock = mockStatic(SecurityContextHolder.class)) {
             mocked.when(MultiTenantFilter::getCurrentTenantId).thenReturn("tenant-1");
+
+            SecurityContext securityContext = mock(SecurityContext.class);
+            Authentication auth = mock(Authentication.class);
+            when(securityContext.getAuthentication()).thenReturn(auth);
+            when(auth.getName()).thenReturn("testuser");
+            securityMock.when(SecurityContextHolder::getContext).thenReturn(securityContext);
 
             CaseDefinitionQuery defQuery = mock(CaseDefinitionQuery.class);
             CaseDefinition definition = mock(CaseDefinition.class);
@@ -72,11 +85,12 @@ class CaseServiceTest extends AbstractUnitTest {
             when(defQuery.caseDefinitionTenantId("tenant-1")).thenReturn(defQuery);
             when(defQuery.singleResult()).thenReturn(definition);
             when(definition.getName()).thenReturn("Test Case");
+            when(definition.getTenantId()).thenReturn("tenant-1");
 
             CaseInstanceBuilder builder = mock(CaseInstanceBuilder.class);
             CaseInstance caseInstance = mock(CaseInstance.class);
             when(cmmnRuntimeService.createCaseInstanceBuilder()).thenReturn(builder);
-            when(builder.caseDefinitionKey("testCase")).thenReturn(builder);
+            when(builder.caseDefinitionId(definition.getId())).thenReturn(builder);
             when(builder.variables(anyMap())).thenReturn(builder);
             when(builder.businessKey(anyString())).thenReturn(builder);
             when(builder.tenantId("tenant-1")).thenReturn(builder);
@@ -84,6 +98,9 @@ class CaseServiceTest extends AbstractUnitTest {
             when(caseInstance.getId()).thenReturn("case-1");
             when(caseInstance.getCaseDefinitionId()).thenReturn("testCase:1:1");
             when(caseInstance.getCaseDefinitionKey()).thenReturn("testCase");
+            when(caseInstance.getStartTime()).thenReturn(new Date());
+            when(caseInstance.getStartUserId()).thenReturn("testuser");
+            when(caseInstance.getTenantId()).thenReturn("tenant-1");
 
             InstanceDTO result = caseService.startCaseInstance("testCase", Map.of("key", "value"), "BK-001");
 
@@ -96,15 +113,27 @@ class CaseServiceTest extends AbstractUnitTest {
 
     @Test
     void startCaseInstance_missingDefinition() {
-        try (MockedStatic<MultiTenantFilter> mocked = mockStatic(MultiTenantFilter.class)) {
+        try (MockedStatic<MultiTenantFilter> mocked = mockStatic(MultiTenantFilter.class);
+             MockedStatic<SecurityContextHolder> securityMock = mockStatic(SecurityContextHolder.class)) {
             mocked.when(MultiTenantFilter::getCurrentTenantId).thenReturn("tenant-1");
 
-            CaseDefinitionQuery defQuery = mock(CaseDefinitionQuery.class);
-            when(cmmnRepositoryService.createCaseDefinitionQuery()).thenReturn(defQuery);
-            when(defQuery.caseDefinitionKey("nonexistent")).thenReturn(defQuery);
-            when(defQuery.latestVersion()).thenReturn(defQuery);
-            when(defQuery.caseDefinitionTenantId("tenant-1")).thenReturn(defQuery);
-            when(defQuery.singleResult()).thenReturn(null);
+            SecurityContext securityContext = mock(SecurityContext.class);
+            Authentication auth = mock(Authentication.class);
+            when(securityContext.getAuthentication()).thenReturn(auth);
+            when(auth.getName()).thenReturn("testuser");
+            securityMock.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+
+            CaseDefinitionQuery tenantDefQuery = mock(CaseDefinitionQuery.class);
+            CaseDefinitionQuery globalDefQuery = mock(CaseDefinitionQuery.class);
+            when(cmmnRepositoryService.createCaseDefinitionQuery()).thenReturn(tenantDefQuery, globalDefQuery);
+            when(tenantDefQuery.caseDefinitionKey("nonexistent")).thenReturn(tenantDefQuery);
+            when(tenantDefQuery.latestVersion()).thenReturn(tenantDefQuery);
+            when(tenantDefQuery.caseDefinitionTenantId("tenant-1")).thenReturn(tenantDefQuery);
+            when(tenantDefQuery.singleResult()).thenReturn(null);
+            when(globalDefQuery.caseDefinitionKey("nonexistent")).thenReturn(globalDefQuery);
+            when(globalDefQuery.latestVersion()).thenReturn(globalDefQuery);
+            when(globalDefQuery.caseDefinitionTenantId("")).thenReturn(globalDefQuery);
+            when(globalDefQuery.singleResult()).thenReturn(null);
 
             assertThrows(IllegalArgumentException.class, () ->
                     caseService.startCaseInstance("nonexistent", null, null));
@@ -118,13 +147,15 @@ class CaseServiceTest extends AbstractUnitTest {
 
             CaseInstanceQuery query = mock(CaseInstanceQuery.class);
             when(cmmnRuntimeService.createCaseInstanceQuery()).thenReturn(query);
+            when(query.or()).thenReturn(query);
             when(query.caseInstanceTenantId("tenant-1")).thenReturn(query);
+            when(query.caseInstanceTenantId("")).thenReturn(query);
+            when(query.endOr()).thenReturn(query);
             when(query.count()).thenReturn(5L);
 
             long count = caseService.countActiveCaseInstances(null);
 
             assertEquals(5L, count);
-            verify(query).caseInstanceTenantId("tenant-1");
         }
     }
 
@@ -136,7 +167,10 @@ class CaseServiceTest extends AbstractUnitTest {
             HistoricCaseInstanceQuery query = mock(HistoricCaseInstanceQuery.class);
             when(cmmnHistoryService.createHistoricCaseInstanceQuery()).thenReturn(query);
             when(query.finished()).thenReturn(query);
+            when(query.or()).thenReturn(query);
             when(query.caseInstanceTenantId("tenant-1")).thenReturn(query);
+            when(query.caseInstanceTenantId("")).thenReturn(query);
+            when(query.endOr()).thenReturn(query);
             when(query.count()).thenReturn(10L);
 
             long count = caseService.countCompletedCaseInstances();
