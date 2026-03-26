@@ -3,6 +3,7 @@ package com.flowable.platform.test.unit;
 import com.flowable.platform.config.MultiTenantFilter;
 import com.flowable.platform.dto.DefinitionDTO;
 import com.flowable.platform.dto.DefinitionType;
+import com.flowable.platform.dto.DiagramDataDTO;
 import com.flowable.platform.dto.InstanceDTO;
 import com.flowable.platform.service.AuditService;
 import com.flowable.platform.service.CaseService;
@@ -16,6 +17,9 @@ import org.flowable.cmmn.api.repository.CaseDefinitionQuery;
 import org.flowable.cmmn.api.runtime.CaseInstance;
 import org.flowable.cmmn.api.runtime.CaseInstanceBuilder;
 import org.flowable.cmmn.api.runtime.CaseInstanceQuery;
+import org.flowable.cmmn.api.runtime.PlanItemInstance;
+import org.flowable.cmmn.api.runtime.PlanItemInstanceQuery;
+import org.flowable.cmmn.model.CmmnModel;
 import org.flowable.engine.IdentityService;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -177,5 +181,105 @@ class CaseServiceTest extends AbstractUnitTest {
 
             assertEquals(10L, count);
         }
+    }
+
+    @Test
+    void getCaseInstanceDiagram_returnsNull_whenInstanceNotFound() {
+        CaseInstanceQuery query = mock(CaseInstanceQuery.class);
+        when(cmmnRuntimeService.createCaseInstanceQuery()).thenReturn(query);
+        when(query.caseInstanceId("nonexistent")).thenReturn(query);
+        when(query.singleResult()).thenReturn(null);
+
+        DiagramDataDTO result = caseService.getCaseInstanceDiagram("nonexistent");
+
+        assertNull(result);
+    }
+
+    @Test
+    void getCaseInstanceDiagram_returnsDiagramData_forActiveInstance() {
+        // Mock case instance
+        CaseInstance instance = mock(CaseInstance.class);
+        when(instance.getId()).thenReturn("case-1");
+        when(instance.getCaseDefinitionId()).thenReturn("simpleCase:1:1");
+
+        CaseInstanceQuery instanceQuery = mock(CaseInstanceQuery.class);
+        when(cmmnRuntimeService.createCaseInstanceQuery()).thenReturn(instanceQuery);
+        when(instanceQuery.caseInstanceId("case-1")).thenReturn(instanceQuery);
+        when(instanceQuery.singleResult()).thenReturn(instance);
+
+        // Mock case definition
+        CaseDefinition definition = mock(CaseDefinition.class);
+        when(definition.getId()).thenReturn("simpleCase:1:1");
+        when(definition.getDeploymentId()).thenReturn("dep-1");
+        when(definition.getResourceName()).thenReturn("processes/simple-case.cmmn");
+
+        CaseDefinitionQuery defQuery = mock(CaseDefinitionQuery.class);
+        when(cmmnRepositoryService.createCaseDefinitionQuery()).thenReturn(defQuery);
+        when(defQuery.caseDefinitionId("simpleCase:1:1")).thenReturn(defQuery);
+        when(defQuery.singleResult()).thenReturn(definition);
+
+        // Mock CMMN model returning null to trigger fallback resource path
+        when(cmmnRepositoryService.getCmmnModel("simpleCase:1:1")).thenReturn(null);
+
+        // Mock CMMN resource as fallback
+        String cmmnXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><definitions xmlns=\"http://www.omg.org/spec/CMMN/20151109/MODEL\" xmlns:cmmndi=\"http://www.omg.org/spec/CMMN/20151109/CMMNDI\" xmlns:dc=\"http://www.omg.org/spec/CMMN/20151109/DC\"><case id=\"simpleCase\"><casePlanModel id=\"casePlanModel\"><planItem id=\"task1\" definitionRef=\"ht1\"/></casePlanModel></case><cmmndi:CMMNDI><cmmndi:CMMNDiagram id=\"d1\"><cmmndi:CMMNShape id=\"s1\" cmmnElementRef=\"task1\"><dc:Bounds x=\"100\" y=\"80\" width=\"160\" height=\"100\"/><cmmndi:CMMNLabel/></cmmndi:CMMNShape></cmmndi:CMMNDiagram></cmmndi:CMMNDI></definitions>";
+        when(cmmnRepositoryService.getResourceAsStream(eq("dep-1"), eq("processes/simple-case.cmmn")))
+                .thenReturn(new java.io.ByteArrayInputStream(cmmnXml.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+
+        // Mock active plan items
+        PlanItemInstance planItem = mock(PlanItemInstance.class);
+        when(planItem.getId()).thenReturn("planItem-1");
+        when(planItem.getElementId()).thenReturn("humanTask");
+        when(planItem.getName()).thenReturn("Review Case");
+
+        PlanItemInstanceQuery planQuery = mock(PlanItemInstanceQuery.class);
+        when(cmmnRuntimeService.createPlanItemInstanceQuery()).thenReturn(planQuery);
+        when(planQuery.caseInstanceId("case-1")).thenReturn(planQuery);
+        when(planQuery.planItemInstanceStateActive()).thenReturn(planQuery);
+        when(planQuery.list()).thenReturn(List.of(planItem));
+
+        DiagramDataDTO result = caseService.getCaseInstanceDiagram("case-1");
+
+        assertNotNull(result);
+        assertNotNull(result.getDiagramXml());
+        // Service adds both planItem ID and element ID for active elements
+        assertTrue(result.getActiveElementIds().size() >= 1);
+        assertTrue(result.getActiveElementIds().contains("planItem-1"));
+        assertEquals("planItem-1", result.getCurrentElementId());
+    }
+
+    @Test
+    void getCaseInstanceDiagram_returnsNull_whenDefinitionNotFound() {
+        CaseInstance instance = mock(CaseInstance.class);
+        when(instance.getId()).thenReturn("case-1");
+        when(instance.getCaseDefinitionId()).thenReturn("missing:1:1");
+
+        CaseInstanceQuery instanceQuery = mock(CaseInstanceQuery.class);
+        when(cmmnRuntimeService.createCaseInstanceQuery()).thenReturn(instanceQuery);
+        when(instanceQuery.caseInstanceId("case-1")).thenReturn(instanceQuery);
+        when(instanceQuery.singleResult()).thenReturn(instance);
+
+        CaseDefinitionQuery defQuery = mock(CaseDefinitionQuery.class);
+        when(cmmnRepositoryService.createCaseDefinitionQuery()).thenReturn(defQuery);
+        when(defQuery.caseDefinitionId("missing:1:1")).thenReturn(defQuery);
+        when(defQuery.singleResult()).thenReturn(null);
+
+        DiagramDataDTO result = caseService.getCaseInstanceDiagram("case-1");
+
+        assertNull(result);
+    }
+
+    @Test
+    void getCaseInstanceDiagram_returnsEmptyActiveIds_forCompletedCase() {
+        // Active query returns null (completed case)
+        CaseInstanceQuery instanceQuery = mock(CaseInstanceQuery.class);
+        when(cmmnRuntimeService.createCaseInstanceQuery()).thenReturn(instanceQuery);
+        when(instanceQuery.caseInstanceId("case-done")).thenReturn(instanceQuery);
+        when(instanceQuery.singleResult()).thenReturn(null);
+
+        // Historic case exists but diagram returns null since it's completed
+        DiagramDataDTO result = caseService.getCaseInstanceDiagram("case-done");
+
+        assertNull(result);
     }
 }

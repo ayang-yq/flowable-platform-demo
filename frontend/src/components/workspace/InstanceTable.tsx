@@ -1,9 +1,22 @@
 'use client';
 
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import TypeBadge from './TypeBadge';
 import StatusBadge from './StatusBadge';
+import { apiClient, DiagramData } from '@/lib/api';
+
+// Lazy load diagram viewers - only loaded when a row is expanded
+const BpmnViewer = dynamic(
+  () => import('@/components/diagram/BpmnViewer').then(m => ({ default: m.BpmnViewer })),
+  { loading: () => <div className="h-48 bg-gray-50 animate-pulse rounded" />, ssr: false }
+);
+const CmmnViewer = dynamic(
+  () => import('@/components/diagram/CmmnViewer').then(m => ({ default: m.CmmnViewer })),
+  { loading: () => <div className="h-48 bg-gray-50 animate-pulse rounded" />, ssr: false }
+);
 
 interface InstanceDTO {
   id: string;
@@ -54,6 +67,62 @@ function formatDate(dateStr: string | null): string {
   return new Date(dateStr).toLocaleString();
 }
 
+function DiagramPreview({ instance }: { instance: InstanceDTO }) {
+  const [diagramData, setDiagramData] = useState<DiagramData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDiagram = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      let data: DiagramData;
+      if (instance.type === 'BPMN') {
+        data = await apiClient.getProcessInstanceDiagram(instance.id);
+      } else if (instance.type === 'CMMN') {
+        data = await apiClient.getCaseInstanceDiagram(instance.id);
+      } else {
+        setError('Diagram not supported for DMN');
+        return;
+      }
+      setDiagramData(data);
+    } catch {
+      setError('Failed to load diagram');
+    } finally {
+      setLoading(false);
+    }
+  }, [instance.id, instance.type]);
+
+  // Fetch diagram on mount (only when expanded)
+  useEffect(() => { fetchDiagram(); }, [fetchDiagram]);
+
+  if (error) {
+    return <div className="text-sm text-gray-400 py-4">{error}</div>;
+  }
+
+  if (loading) {
+    return <div className="h-48 bg-gray-50 animate-pulse rounded" />;
+  }
+
+  if (!diagramData || !diagramData.diagramXml) {
+    return <div className="text-sm text-gray-400 py-4">No diagram available</div>;
+  }
+
+  const commonProps = {
+    xml: diagramData.diagramXml,
+    activeElementIds: diagramData.activeElementIds || [],
+    completedElementIds: diagramData.completedElementIds || [],
+    currentElementId: diagramData.currentElementId || '',
+  };
+
+  return (
+    <div className="max-w-2xl">
+      {instance.type === 'BPMN' && <BpmnViewer {...commonProps} />}
+      {instance.type === 'CMMN' && <CmmnViewer {...commonProps} />}
+    </div>
+  );
+}
+
 export default function InstanceTable({
   instances,
   pagination,
@@ -62,6 +131,12 @@ export default function InstanceTable({
   showEndTime = false,
 }: InstanceTableProps) {
   const router = useRouter();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const toggleExpand = (e: React.MouseEvent, instanceId: string) => {
+    e.stopPropagation();
+    setExpandedId(prev => prev === instanceId ? null : instanceId);
+  };
 
   if (loading) {
     return (
@@ -75,11 +150,14 @@ export default function InstanceTable({
     );
   }
 
+  const colSpan = showEndTime ? 6 : 5;
+
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
+            <th className="w-8 px-2 py-3"></th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name / Key</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -96,42 +174,64 @@ export default function InstanceTable({
         <tbody className="bg-white divide-y divide-gray-200">
           {instances.length === 0 ? (
             <tr>
-              <td colSpan={showEndTime ? 7 : 5} className="px-6 py-12 text-center text-sm text-gray-500">
+              <td colSpan={colSpan} className="px-6 py-12 text-center text-sm text-gray-500">
                 No instances found.
               </td>
             </tr>
           ) : (
             instances.map((instance) => (
-              <tr
-                key={instance.id}
-                className="hover:bg-gray-50 cursor-pointer"
-                onClick={() => router.push(`/workspace/${instance.id}?type=${instance.type}`)}
-              >
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900">
-                    {instance.definitionName || instance.definitionKey}
-                  </div>
-                  {instance.businessKey && (
-                    <div className="text-xs text-gray-500 font-mono">{instance.businessKey}</div>
+              <>
+                <tr
+                  key={instance.id}
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => router.push(`/workspace/${instance.id}?type=${instance.type}`)}
+                >
+                  <td className="px-2 py-4 text-center">
+                    {(instance.type === 'BPMN' || instance.type === 'CMMN') && instance.status === 'ACTIVE' && (
+                      <button
+                        onClick={(e) => toggleExpand(e, instance.id)}
+                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                        title={expandedId === instance.id ? 'Collapse diagram' : 'Preview diagram'}
+                      >
+                        {expandedId === instance.id
+                          ? <ChevronUp className="w-4 h-4" />
+                          : <ChevronDown className="w-4 h-4" />}
+                      </button>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900">
+                      {instance.definitionName || instance.definitionKey}
+                    </div>
+                    {instance.businessKey && (
+                      <div className="text-xs text-gray-500 font-mono">{instance.businessKey}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <TypeBadge type={instance.type} />
+                  </td>
+                  <td className="px-6 py-4">
+                    <StatusBadge status={instance.status} />
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{instance.startedBy || '-'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{formatDate(instance.startTime)}</td>
+                  {showEndTime && (
+                    <>
+                      <td className="px-6 py-4 text-sm text-gray-500">{formatDate(instance.endTime)}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {instance.duration ? formatDuration(instance.duration) : '-'}
+                      </td>
+                    </>
                   )}
-                </td>
-                <td className="px-6 py-4">
-                  <TypeBadge type={instance.type} />
-                </td>
-                <td className="px-6 py-4">
-                  <StatusBadge status={instance.status} />
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">{instance.startedBy || '-'}</td>
-                <td className="px-6 py-4 text-sm text-gray-500">{formatDate(instance.startTime)}</td>
-                {showEndTime && (
-                  <>
-                    <td className="px-6 py-4 text-sm text-gray-500">{formatDate(instance.endTime)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {instance.duration ? formatDuration(instance.duration) : '-'}
+                </tr>
+                {expandedId === instance.id && (
+                  <tr key={`${instance.id}-diagram`} className="bg-gray-50">
+                    <td colSpan={colSpan} className="px-6 py-4">
+                      <DiagramPreview instance={instance} />
                     </td>
-                  </>
+                  </tr>
                 )}
-              </tr>
+              </>
             ))
           )}
         </tbody>
