@@ -15,12 +15,12 @@
     <startEvent id="start" name="Start"/>
     <sequenceFlow sourceRef="start" targetRef="createPO"/>
 
-    <userTask id="createPO" name="Create Purchase Order" flowable:assignee="${requester}">
+    <userTask id="createPO" name="Create Purchase Order" flowable:assignee="${initiator}">
       <documentation>Employee creates purchase order request</documentation>
     </userTask>
     <sequenceFlow sourceRef="createPO" targetRef="deptApproval"/>
 
-    <userTask id="deptApproval" name="Department Approval" flowable:candidateGroups="${dept}"/>
+    <userTask id="deptApproval" name="Department Approval" flowable:candidateGroups="managers"/>
     <sequenceFlow sourceRef="deptApproval" targetRef="amountGateway"/>
 
     <exclusiveGateway id="amountGateway" name="Check Amount"/>

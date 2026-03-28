@@ -36,7 +36,7 @@
     <parallelGateway id="parallelGatewayStart" name="Start Parallel Review"/>
 
     <!-- Reviewer 1 - User Task -->
-    <userTask id="reviewer1Task" name="Reviewer 1 Review" flowable:assignee="${reviewer1}">
+    <userTask id="reviewer1Task" name="Reviewer 1 Review" flowable:candidateGroups="reviewers">
       <documentation>First reviewer reviews the document</documentation>
       <extensionElements>
         <flowable:formProperty id="reviewer1Approved" name="Approved" type="enum" required="true">
@@ -48,7 +48,7 @@
     </userTask>
 
     <!-- Reviewer 2 - User Task -->
-    <userTask id="reviewer2Task" name="Reviewer 2 Review" flowable:assignee="${reviewer2}">
+    <userTask id="reviewer2Task" name="Reviewer 2 Review" flowable:candidateGroups="reviewers">
       <documentation>Second reviewer reviews the document</documentation>
       <extensionElements>
         <flowable:formProperty id="reviewer2Approved" name="Approved" type="enum" required="true">
@@ -63,7 +63,7 @@
     <parallelGateway id="parallelGatewayEnd" name="Join Parallel Review"/>
 
     <!-- Final Decision - User Task -->
-    <userTask id="finalDecision" name="Final Decision" flowable:assignee="${decisionMaker}">
+    <userTask id="finalDecision" name="Final Decision" flowable:candidateGroups="managers">
       <documentation>Make final decision based on both reviewers' feedback</documentation>
       <extensionElements>
         <flowable:formProperty id="finalApproval" name="Final Decision" type="enum" required="true">

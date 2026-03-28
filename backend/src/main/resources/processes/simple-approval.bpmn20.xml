@@ -12,7 +12,7 @@
     <startEvent id="start" name="Start"/>
     <sequenceFlow sourceRef="start" targetRef="submitTask"/>
 
-    <userTask id="submitTask" name="Submit Request" flowable:assignee="${employeeName}"/>
+    <userTask id="submitTask" name="Submit Request" flowable:assignee="${initiator}"/>
     <sequenceFlow sourceRef="submitTask" targetRef="approvalTask"/>
 
     <userTask id="approvalTask" name="Manager Approval">

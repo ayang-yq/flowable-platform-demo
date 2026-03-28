@@ -33,7 +33,7 @@
     </userTask>
 
     <!-- Manager Approval - User Task -->
-    <userTask id="managerApproval" name="Manager Approval" flowable:assignee="${manager}">
+    <userTask id="managerApproval" name="Manager Approval" flowable:candidateGroups="managers">
       <documentation>Manager reviews and approves or rejects the leave request</documentation>
       <extensionElements>
         <flowable:formProperty id="decision" name="Decision" type="enum" required="true">

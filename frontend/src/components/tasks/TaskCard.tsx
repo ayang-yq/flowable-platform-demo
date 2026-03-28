@@ -169,7 +169,7 @@ export default function TaskCard({
                   Claim Task
                 </button>
               )}
-              {task.assignee && onComplete && (
+              {onComplete && (
                 <button
                   onClick={() => onComplete(task.id)}
                   className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"

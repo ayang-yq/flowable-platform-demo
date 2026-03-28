@@ -17,7 +17,7 @@
     <startEvent id="startEvent" name="Start"/>
 
     <!-- Submit Expense - User Task -->
-    <userTask id="submitExpense" name="Submit Expense" flowable:assignee="${employee}">
+    <userTask id="submitExpense" name="Submit Expense" flowable:assignee="${initiator}">
       <documentation>Employee submits expense claim with amount, category and description</documentation>
       <extensionElements>
         <flowable:formProperty id="amount" name="Amount" type="string" required="true"/>
@@ -37,7 +37,7 @@
     <exclusiveGateway id="amountCheckGateway" name="Amount Check"/>
 
     <!-- Manager Approval - for amounts <= 5000 -->
-    <userTask id="managerApproval" name="Manager Approval" flowable:assignee="${manager}">
+    <userTask id="managerApproval" name="Manager Approval" flowable:candidateGroups="managers">
       <documentation>Manager approves or rejects the expense claim</documentation>
       <extensionElements>
         <flowable:formProperty id="approved" name="Approved" type="enum" required="true">
@@ -49,7 +49,7 @@
     </userTask>
 
     <!-- Director Approval - for amounts > 5000 -->
-    <userTask id="directorApproval" name="Director Approval" flowable:assignee="${director}">
+    <userTask id="directorApproval" name="Director Approval" flowable:candidateGroups="directors">
       <documentation>Director approves high-value expense claims</documentation>
       <extensionElements>
         <flowable:formProperty id="approved" name="Approved" type="enum" required="true">

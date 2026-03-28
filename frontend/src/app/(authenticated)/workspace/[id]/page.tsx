@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Clock, User, Key, FileText } from 'lucide-react';
+import { ArrowLeft, Clock, User, Key, FileText, CheckCircle, UserPlus } from 'lucide-react';
 import { apiClient, DiagramData } from '@/lib/api';
 import TypeBadge from '@/components/workspace/TypeBadge';
 import StatusBadge from '@/components/workspace/StatusBadge';
@@ -60,28 +60,31 @@ export default function InstanceDetailPage() {
   const [detail, setDetail] = useState<InstanceDetailDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [taskActionLoading, setTaskActionLoading] = useState<string | null>(null);
+  const [taskFeedback, setTaskFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Diagram state
   const [diagramData, setDiagramData] = useState<DiagramData | null>(null);
   const [diagramLoading, setDiagramLoading] = useState(false);
   const [diagramError, setDiagramError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchDetail = async () => {
-      try {
-        const response = await apiClient.get<InstanceDetailDTO>(
-          `/api/workspace/instances/${id}?type=${type}`
-        );
-        setDetail(response.data);
-        setError(null);
-      } catch {
-        setError('Failed to load instance details');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDetail();
+  const fetchDetail = useCallback(async () => {
+    try {
+      const response = await apiClient.get<InstanceDetailDTO>(
+        `/api/workspace/instances/${id}?type=${type}`
+      );
+      setDetail(response.data);
+      setError(null);
+    } catch {
+      setError('Failed to load instance details');
+    } finally {
+      setLoading(false);
+    }
   }, [id, type]);
+
+  useEffect(() => {
+    fetchDetail();
+  }, [fetchDetail]);
 
   // Fetch diagram data when detail is loaded
   useEffect(() => {
@@ -117,6 +120,34 @@ export default function InstanceDetailPage() {
 
     fetchDiagram();
   }, [detail, type, id]);
+
+  const handleClaimTask = async (taskId: string) => {
+    setTaskActionLoading(taskId);
+    setTaskFeedback(null);
+    try {
+      await apiClient.claimTask(taskId);
+      setTaskFeedback({ type: 'success', message: 'Task claimed successfully' });
+      await fetchDetail();
+    } catch {
+      setTaskFeedback({ type: 'error', message: 'Failed to claim task' });
+    } finally {
+      setTaskActionLoading(null);
+    }
+  };
+
+  const handleCompleteTask = async (taskId: string) => {
+    setTaskActionLoading(taskId);
+    setTaskFeedback(null);
+    try {
+      await apiClient.completeTask(taskId);
+      setTaskFeedback({ type: 'success', message: 'Task completed successfully' });
+      await fetchDetail();
+    } catch {
+      setTaskFeedback({ type: 'error', message: 'Failed to complete task' });
+    } finally {
+      setTaskActionLoading(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -173,6 +204,17 @@ export default function InstanceDetailPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Task action feedback */}
+        {taskFeedback && (
+          <div className={`rounded-md p-4 ${
+            taskFeedback.type === 'success'
+              ? 'bg-green-50 border border-green-200 text-green-700'
+              : 'bg-red-50 border border-red-200 text-red-700'
+          }`}>
+            {taskFeedback.message}
+          </div>
+        )}
+
         {/* Metadata card */}
         <div className="bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Instance Details</h2>
@@ -316,7 +358,34 @@ export default function InstanceDetailPage() {
                       Assigned to: {task.assignee || 'Unassigned'}
                     </p>
                   </div>
-                  <p className="text-xs text-gray-400">{formatDate(task.createTime)}</p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-xs text-gray-400">{formatDate(task.createTime)}</p>
+                    <div className="flex gap-2">
+                      {!task.assignee && (
+                        <button
+                          onClick={() => handleClaimTask(task.id)}
+                          disabled={taskActionLoading === task.id}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          <UserPlus className="w-3 h-3" />
+                          Claim
+                        </button>
+                      )}
+                      <button
+                        onClick={async () => {
+                          if (!task.assignee) {
+                            await handleClaimTask(task.id);
+                          }
+                          handleCompleteTask(task.id);
+                        }}
+                        disabled={taskActionLoading === task.id}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
+                      >
+                        <CheckCircle className="w-3 h-3" />
+                        {task.assignee ? 'Complete' : 'Claim & Complete'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

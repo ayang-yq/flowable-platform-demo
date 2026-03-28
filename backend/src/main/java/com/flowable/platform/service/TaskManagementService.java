@@ -1,8 +1,10 @@
 package com.flowable.platform.service;
 
+import com.flowable.platform.config.MultiTenantFilter;
 import com.flowable.platform.dto.TaskDTO;
 import com.flowable.platform.entity.User;
 import com.flowable.platform.repository.UserRepository;
+import org.flowable.cmmn.api.CmmnTaskService;
 import org.flowable.engine.HistoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -38,15 +40,19 @@ public class TaskManagementService {
     private final BusinessCalendarService businessCalendarService;
     private final AuditService auditService;
 
+    private final CmmnTaskService cmmnTaskService;
+
     @Autowired
     public TaskManagementService(
             org.flowable.engine.TaskService flowableTaskService,
+            CmmnTaskService cmmnTaskService,
             RuntimeService runtimeService,
             HistoryService historyService,
             UserRepository userRepository,
             BusinessCalendarService businessCalendarService,
             AuditService auditService) {
         this.flowableTaskService = flowableTaskService;
+        this.cmmnTaskService = cmmnTaskService;
         this.runtimeService = runtimeService;
         this.historyService = historyService;
         this.userRepository = userRepository;
@@ -189,13 +195,11 @@ public class TaskManagementService {
 
         String currentUsername = getCurrentUsername();
 
-        if (!currentUsername.equals(task.getAssignee())) {
+        // Auto-claim unassigned tasks
+        if (task.getAssignee() == null || task.getAssignee().isEmpty()) {
+            flowableTaskService.setAssignee(taskId, currentUsername);
+        } else if (!currentUsername.equals(task.getAssignee()) && !isCurrentUserAdmin()) {
             throw new IllegalStateException("Task is not assigned to current user");
-        }
-
-        // Check for required approval comment if needed
-        if (variables != null && !variables.containsKey("comment")) {
-            // You could add logic here to require comments for certain task types
         }
 
         // Validate variable sizes
@@ -203,7 +207,14 @@ public class TaskManagementService {
             validateVariables(variables);
         }
 
-        flowableTaskService.complete(taskId, variables);
+        // Complete via CMMN or BPMN engine depending on task scope
+        if ("cmmn".equals(task.getScopeType())) {
+            // CMMN task - use CMMN task service
+            cmmnTaskService.complete(taskId, variables);
+        } else {
+            // BPMN task - use standard task service
+            flowableTaskService.complete(taskId, variables);
+        }
 
         // Audit log
         auditService.logAction("TASK_COMPLETED", "Task", taskId,
@@ -420,6 +431,19 @@ public class TaskManagementService {
     private String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null ? authentication.getName() : "system";
+    }
+
+    private boolean isCurrentUserAdmin() {
+        String username = getCurrentUsername();
+        String tenantId = MultiTenantFilter.getCurrentTenantId();
+        if (tenantId == null) {
+            return false;
+        }
+        return userRepository.findActiveByTenantIdAndUsernameWithRoles(
+                        UUID.fromString(tenantId), username)
+                .map(user -> user.getRoles().stream()
+                        .anyMatch(role -> "ADMIN".equalsIgnoreCase(role.getCode())))
+                .orElse(false);
     }
 
     private TaskDTO convertToDTO(Task task) {

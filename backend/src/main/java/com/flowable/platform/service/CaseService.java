@@ -3,6 +3,7 @@ package com.flowable.platform.service;
 import com.flowable.platform.config.MultiTenantFilter;
 import com.flowable.platform.dto.*;
 import com.flowable.platform.util.CmmnDiGenerator;
+import org.flowable.engine.TaskService;
 import org.flowable.cmmn.api.CmmnHistoryService;
 import org.flowable.cmmn.api.CmmnRepositoryService;
 import org.flowable.cmmn.api.CmmnRuntimeService;
@@ -17,6 +18,7 @@ import org.flowable.cmmn.api.runtime.CaseInstanceQuery;
 import org.flowable.cmmn.api.runtime.PlanItemInstance;
 import org.flowable.engine.IdentityService;
 import org.flowable.task.api.TaskInfo;
+import org.flowable.task.api.Task;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -37,17 +39,20 @@ public class CaseService {
     private final CmmnRepositoryService cmmnRepositoryService;
     private final AuditService auditService;
     private final IdentityService identityService;
+    private final TaskService taskService;
 
     public CaseService(CmmnRuntimeService cmmnRuntimeService,
                        CmmnHistoryService cmmnHistoryService,
                        CmmnRepositoryService cmmnRepositoryService,
                        AuditService auditService,
-                       IdentityService identityService) {
+                       IdentityService identityService,
+                       TaskService taskService) {
         this.cmmnRuntimeService = cmmnRuntimeService;
         this.cmmnHistoryService = cmmnHistoryService;
         this.cmmnRepositoryService = cmmnRepositoryService;
         this.auditService = auditService;
         this.identityService = identityService;
+        this.taskService = taskService;
     }
 
     public List<DefinitionDTO> listCaseDefinitions() {
@@ -297,6 +302,12 @@ public class CaseService {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList()));
 
+            // Active tasks for this case instance
+            List<Task> tasks = taskService.createTaskQuery()
+                    .caseInstanceId(caseInstanceId)
+                    .list();
+            detail.setTasks(tasks.stream().map(this::toTaskDTO).collect(Collectors.toList()));
+
             return detail;
         }
 
@@ -392,6 +403,16 @@ public class CaseService {
         detail.setStatus(source.getStatus());
         detail.setBusinessKey(source.getBusinessKey());
         detail.setTenantId(source.getTenantId());
+    }
+
+    private TaskDTO toTaskDTO(Task task) {
+        TaskDTO dto = new TaskDTO();
+        dto.setId(task.getId());
+        dto.setName(task.getName());
+        dto.setAssignee(task.getAssignee());
+        dto.setCreateTime(task.getCreateTime() != null ?
+                task.getCreateTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null);
+        return dto;
     }
 
     private String getCurrentUser() {
