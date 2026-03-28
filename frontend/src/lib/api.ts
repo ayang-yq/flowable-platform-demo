@@ -151,6 +151,35 @@ class ApiClient {
     );
     return response.data;
   }
+
+  /**
+   * Fetch task details by ID
+   */
+  async getTask(taskId: string): Promise<any> {
+    const response = await this.get<any>(`/api/tasks/${taskId}`);
+    return response.data;
+  }
+
+  /**
+   * Claim an unassigned task
+   */
+  async claimTask(taskId: string): Promise<void> {
+    await this.post(`/api/tasks/${taskId}/claim`, {});
+  }
+
+  /**
+   * Complete a task with optional variables
+   */
+  async completeTask(taskId: string, variables?: Record<string, any>): Promise<void> {
+    await this.post(`/api/tasks/${taskId}/complete`, { variables: variables || {} });
+  }
+
+  /**
+   * Delegate a task to another user
+   */
+  async delegateTask(taskId: string, delegateTo: string): Promise<void> {
+    await this.post(`/api/tasks/${taskId}/delegate`, { delegateTo });
+  }
 }
 
 export const apiClient = new ApiClient(API_URL);
