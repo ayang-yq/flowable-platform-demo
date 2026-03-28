@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import DiagramLegend from './DiagramLegend';
 
 interface CmmnViewerProps {
   xml?: string;
@@ -158,6 +159,7 @@ export function CmmnViewer({
         ref={containerRef}
         style={{ width: '100%', height: '400px', backgroundColor: '#ffffff', border: '1px solid #e5e7eb' }}
       />
+      <DiagramLegend />
     </div>
   );
 }
@@ -168,38 +170,37 @@ function applyOverlays(
   completedElementIds: string[],
   currentElementId: string
 ) {
-  const overlays = modeler.get('overlays') as any;
   const elementRegistry = modeler.get('elementRegistry') as any;
+  const activeSet = new Set(activeElementIds);
 
-  overlays.clear();
-
-  activeElementIds.forEach(elementId => {
-    const element = elementRegistry.get(elementId);
-    if (element) {
-      overlays.add(element.id, {
-        position: { top: 0, left: 0 },
-        html: '<div style="background-color: rgba(255, 152, 0, 0.2); border: 2px solid #ff9800; width: 100%; height: 100%; position: absolute; top: 0; left: 0; pointer-events: none;"></div>'
-      });
+  // Apply highlight by directly styling the SVG shape elements
+  function highlightShape(elementId: string, fillColor: string, strokeColor: string, strokeWidth: string) {
+    const gfx = elementRegistry.getGraphics(elementId);
+    if (!gfx) return;
+    const shape = gfx.querySelector('.djs-outline')?.previousElementSibling
+      || gfx.querySelector('rect.djs-element-shape')
+      || gfx.querySelector('rect')
+      || gfx.querySelector('path');
+    if (shape) {
+      shape.style.fill = fillColor;
+      shape.style.stroke = strokeColor;
+      shape.style.strokeWidth = strokeWidth;
     }
-  });
+  }
 
+  // Completed elements — green fill on the task rectangle (skip if also active)
   completedElementIds.forEach(elementId => {
-    const element = elementRegistry.get(elementId);
-    if (element && !activeElementIds.includes(element.id)) {
-      overlays.add(element.id, {
-        position: { top: 0, left: 0 },
-        html: '<div style="background-color: rgba(200, 200, 200, 0.3); width: 100%; height: 100%; position: absolute; top: 0; left: 0; pointer-events: none;"></div>'
-      });
-    }
+    if (activeSet.has(elementId)) return;
+    highlightShape(elementId, 'rgba(34,197,94,0.25)', '#22c55e', '3px');
   });
 
+  // Active elements — orange fill on the task rectangle
+  activeElementIds.forEach(elementId => {
+    highlightShape(elementId, 'rgba(249,115,22,0.25)', '#f97316', '3px');
+  });
+
+  // Current element — blue fill (takes priority)
   if (currentElementId) {
-    const element = elementRegistry.get(currentElementId);
-    if (element) {
-      overlays.add(currentElementId, {
-        position: { top: -2, left: -2 },
-        html: '<div style="border: 3px solid #2196f3; width: calc(100% + 4px); height: calc(100% + 4px); position: absolute; top: -2px; left: -2px; pointer-events: none; animation: pulse 2s infinite;"></div>'
-      });
-    }
+    highlightShape(currentElementId, 'rgba(33,150,243,0.3)', '#2196f3', '4px');
   }
 }
